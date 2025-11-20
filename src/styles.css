@@ -1,1 +1,33 @@
 /* You can add global styles to this file, and also import other style files */
+@font-face {
+  font-family: 'Branch';
+  src: url('/assets/fonts/Branch.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Global styles to prevent navbar overlap */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Add padding to account for fixed navbar */
+router-outlet + * {
+  padding-top: 80px;
+}
+
+/* Responsive padding adjustments */
+@media screen and (max-width: 480px) {
+  router-outlet + * {
+    padding-top: 65px;
+  }
+}

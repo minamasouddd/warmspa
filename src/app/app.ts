@@ -1,12 +1,17 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
+import { NavbarComponent } from './Components/navbar/navbar';
+import { FooterComponent } from './Components/footer/footer.component';
+import { HomepageComponent } from './Pages/homepage/homepage';
 import { RouterOutlet } from '@angular/router';
+
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  standalone: true,
+  imports: [RouterOutlet,NavbarComponent,FooterComponent],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrls: ['./app.css']
 })
-export class App {
-  protected readonly title = signal('WarmSpa');
+export class AppComponent {
+  title = 'WarmSpa';
 }

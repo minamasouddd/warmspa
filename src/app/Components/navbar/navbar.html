@@ -1,0 +1,132 @@
+<nav class="navbar">
+  <div class="nav-container">
+    <div class="nav-logo">
+      <img src="https://warm-wellness.com/wp-content/uploads/2024/03/logo_page-0001-1536x1536.jpg" alt="WarmSpa Logo" class="logo-image">
+      <span class="logo-text">WarmSpa</span>
+    </div>
+    
+    <!-- Desktop Menu -->
+    <ul class="nav-menu" [class.active]="isMobileMenuOpen">
+      <li class="nav-item">
+        <a href="#home" 
+           class="nav-link" 
+           [class.active]="activeItem === 'home'"
+           (click)="setActiveItem('home'); scrollToSection('home'); closeMobileMenu()">
+          HOME
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="#" 
+           class="nav-link" 
+           [class.active]="activeItem === 'about'"
+           (click)="$event.preventDefault(); setActiveItem('about'); scrollToSection('about'); closeMobileMenu()">
+          ABOUT
+        </a>
+      </li>
+      <li class="nav-item">
+        <a routerLink="/services"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }"
+           class="nav-link"
+           (click)="setActiveItem('services'); scrollToTop(); closeMobileMenu()">
+          SERVICES
+        </a>
+      </li>
+      <li class="nav-item">
+        <a routerLink="/branches"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }"
+           class="nav-link"
+           (click)="setActiveItem('branches'); scrollToTop(); closeMobileMenu()">
+          OUR BRANCHES
+        </a>
+      </li>
+
+      <li class="nav-item">
+        <a routerLink="/contact-us"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }"
+           class="nav-link"
+           (click)="setActiveItem('contact'); scrollToTop(); closeMobileMenu()">
+          CONTACT
+        </a>
+      </li>
+
+      <li class="nav-item" *ngIf="isAuthenticated">
+        <a routerLink="/feedback-payments"
+           routerLinkActive="active"
+           [routerLinkActiveOptions]="{ exact: true }"
+           class="nav-link"
+           (click)="setActiveItem('feedback'); scrollToTop(); closeMobileMenu()">
+          FEEDBACK &amp; PAYMENTS
+        </a>
+      </li>
+      <li class="nav-item">
+        <a routerLink="/book" class="nav-link book-now-link" (click)="scrollToTop(); closeMobileMenu()">BOOK NOW</a>
+      </li>
+      <ng-container *ngIf="isMobileMenuOpen">
+        <li class="nav-item">
+          <a routerLink="/login"
+             class="nav-btn login-btn"
+             (click)="setActiveItem('login'); scrollToTop(); closeMobileMenu()"
+             aria-label="Login">
+            <span class="btn-text">LOGIN</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a routerLink="/register"
+             class="nav-btn signup-btn"
+             (click)="setActiveItem('register'); scrollToTop(); closeMobileMenu()"
+             aria-label="Sign Up">
+            <span class="btn-text">SIGN UP</span>
+          </a>
+        </li>
+        <li class="nav-item" *ngIf="isAuthenticated">
+          <a href="#" 
+             class="nav-btn logout-btn"
+             (click)="$event.preventDefault(); logout()"
+             aria-label="Logout">
+            <span class="btn-text">LOGOUT</span>
+          </a>
+        </li>
+      </ng-container>
+    </ul>
+
+    <div class="nav-actions">
+      <!-- Authentication Section -->
+      <div class="auth-section" *ngIf="!isAuthenticated">
+        <div class="auth-buttons">
+          <a routerLink="/login"
+             class="nav-btn login-btn"
+             (click)="setActiveItem('login'); scrollToTop(); closeMobileMenu()"
+             aria-label="Login">
+            <span class="btn-text">LOGIN</span>
+          </a>
+          <a routerLink="/register"
+             class="nav-btn signup-btn"
+             (click)="setActiveItem('register'); scrollToTop(); closeMobileMenu()"
+             aria-label="Sign Up">
+            <span class="btn-text">SIGN UP</span>
+          </a>
+        </div>
+      </div>
+      
+      <!-- Logout Button -->
+      <div *ngIf="isAuthenticated">
+        <a href="#" 
+           class="nav-btn logout-btn"
+           (click)="$event.preventDefault(); logout()"
+           aria-label="Logout">
+          <span class="btn-text">LOGOUT</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Mobile Hamburger -->
+    <div class="hamburger" [class.active]="isMobileMenuOpen" (click)="toggleMobileMenu()">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </div>
+  </div>
+</nav>

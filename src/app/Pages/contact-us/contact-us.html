@@ -1,0 +1,87 @@
+<section class="contact-hero">
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <h1 class="hero-title">Get In <span class="gold-text">Touch</span></h1>
+    <p class="hero-subtitle">We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+  </div>
+  <div class="hero-image">
+    <img src="/assets/images/01.jpg" alt="Contact Us" class="hero-img">
+  </div>
+</section>
+
+<section class="contact-section">
+  <div class="container">
+    <div class="contact-content">
+      <div class="contact-info">
+        <h2 class="section-title">Contact <span class="gold-text">Information</span></h2>
+        <div class="info-items">
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="fas fa-phone"></i>
+            </div>
+            <div class="info-text">
+              <h4>Phone</h4>
+              <p><a href="tel:+201285891040">+201285891040</a></p>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div class="info-text">
+              <h4>Email</h4>
+              <p><a href="mailto:info@warmspa.com">info@warmspa.com</a></p>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div class="info-text">
+              <h4>Location</h4>
+              <p>123 Spa Street, Cairo, Egypt</p>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="info-text">
+              <h4>Hours</h4>
+              <p>Mon-Sat: 9:00 AM - 8:00 PM<br>Sun: 10:00 AM - 6:00 PM</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="contact-form">
+        <h2 class="section-title">Send Us a <span class="gold-text">Message</span></h2>
+        <form (ngSubmit)="onSubmit()" #contactForm="ngForm">
+          <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" [(ngModel)]="formData.name" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" [(ngModel)]="formData.email" required>
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" [(ngModel)]="formData.phone">
+          </div>
+          <div class="form-group">
+            <label for="subject">Subject</label>
+            <input type="text" id="subject" name="subject" [(ngModel)]="formData.subject" required>
+          </div>
+          <div class="form-group">
+            <label for="message">Message</label>
+            <textarea id="message" name="message" rows="5" [(ngModel)]="formData.message" required></textarea>
+          </div>
+          <button type="submit" class="submit-btn" [disabled]="!contactForm.form.valid">
+            Send Message
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>

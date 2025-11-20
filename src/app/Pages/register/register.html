@@ -1,0 +1,118 @@
+<div class="register-container">
+  <div class="register-card">
+    <div class="logo-section">
+      <h1 class="logo">WARMSPA</h1>
+      <p class="tagline">Relax • Rejuvenate • Restore</p>
+    </div>
+
+    <h2 class="form-title">Create Your Account</h2>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+
+      <!-- Full Name -->
+      <div class="form-group">
+        <label for="fullName">Full Name</label>
+        <input type="text" id="fullName" formControlName="fullName" class="form-input" placeholder="Enter your full name" />
+        <div class="error-message" *ngIf="isFieldInvalid('fullName')">
+          <span *ngIf="registerForm.get('fullName')?.errors?.['required']">Full name is required</span>
+          <span *ngIf="registerForm.get('fullName')?.errors?.['minlength']">Full name must be at least 2 characters</span>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" formControlName="email" class="form-input" placeholder="Enter your email" />
+        <div class="error-message" *ngIf="isFieldInvalid('email')">
+          <span *ngIf="registerForm.get('email')?.errors?.['required']">Email is required</span>
+          <span *ngIf="registerForm.get('email')?.errors?.['email']">Please enter a valid email</span>
+        </div>
+      </div>
+
+      <!-- Phone -->
+      <div class="form-group">
+        <label for="phone">Phone Number</label>
+        <input type="tel" id="phone" formControlName="phone" class="form-input" placeholder="Enter your phone number" />
+        <div class="error-message" *ngIf="isFieldInvalid('phone')">
+          Phone number is required
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" formControlName="password" class="form-input" placeholder="Create a password" />
+        <div class="error-message" *ngIf="isFieldInvalid('password')">
+          <span *ngIf="registerForm.get('password')?.errors?.['required']">Password is required</span>
+          <span *ngIf="registerForm.get('password')?.errors?.['minlength']">Password must be at least 8 characters</span>
+          <span *ngIf="registerForm.get('password')?.errors?.['pattern']">Password must contain uppercase, lowercase, number & special char</span>
+        </div>
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password</label>
+        <input type="password" id="confirmPassword" formControlName="confirmPassword" class="form-input" placeholder="Confirm your password" />
+        <div class="error-message" *ngIf="isFieldInvalid('confirmPassword')">
+          <span *ngIf="registerForm.get('confirmPassword')?.errors?.['required']">Please confirm your password</span>
+          <span *ngIf="registerForm.get('confirmPassword')?.errors?.['passwordMismatch']">Passwords do not match</span>
+        </div>
+      </div>
+
+      <!-- City -->
+      <div class="form-group">
+        <label for="city">City</label>
+        <select id="city" formControlName="city" class="form-input">
+          <option value="">Select your city</option>
+          <option *ngFor="let city of egyptCities" [value]="city">{{ city }}</option>
+        </select>
+        <div class="error-message" *ngIf="isFieldInvalid('city')">
+          City is required
+        </div>
+      </div>
+
+      <!-- Gender -->
+      <div class="form-group">
+        <label>Gender</label>
+        <div class="gender-options">
+          <label *ngFor="let g of genders" class="radio-container">
+            <input type="radio" [value]="g" formControlName="gender" />
+            <span class="radio-checkmark"></span> {{ g }}
+          </label>
+        </div>
+        <div class="error-message" *ngIf="isFieldInvalid('gender')">
+          Gender is required
+        </div>
+      </div>
+
+      <!-- Terms -->
+      <div class="form-group checkbox-group">
+        <label class="checkbox-container">
+          <input type="checkbox" formControlName="termsAccepted" />
+          <span>I agree to the <a href="/terms" class="link">Terms of Service</a> and <a href="/privacy" class="link">Privacy Policy</a></span>
+        </label>
+        <div class="error-message" *ngIf="isFieldInvalid('termsAccepted')">
+          You must accept the terms and conditions
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="form-group">
+        <button type="submit" class="submit-btn" [disabled]="registerForm.invalid || isLoading">
+          <span *ngIf="!isLoading">Create Account</span>
+          <span *ngIf="isLoading"><i class="fa-solid fa-spinner fa-spin"></i> Creating...</span>
+        </button>
+      </div>
+
+      <!-- Server Error -->
+      <div class="form-error" *ngIf="registerError">
+        <i class="fa-solid fa-exclamation-triangle"></i> {{ registerError }}
+      </div>
+
+    </form>
+
+    <div class="login-link">
+      <p>Already have an account? <a routerLink="/login" class="link">Sign In</a></p>
+    </div>
+  </div>
+</div>

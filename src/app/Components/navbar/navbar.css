@@ -1,0 +1,600 @@
+/* ============================================
+   NAVBAR STYLES - Only Colors Changed to Darker Blue
+   ============================================ */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) ,#45C4C2 50%, rgba(44, 74, 107, 0.98) 55%, rgba(30, 58, 95, 0.98) 100%);
+  backdrop-filter: blur(15px);
+  z-index: 1000;
+  padding: 0 2rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(30, 58, 95, 0.4);
+  min-height: 80px;
+}
+
+
+
+.nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 0;
+  width: 100%;
+  position: relative;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0.25rem 0;
+  gap: 1rem;
+}
+
+.nav-logo .logo-image {
+  height: 85px;
+  width: auto;
+  max-width: 250px;
+  object-fit: contain;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  mix-blend-mode: multiply;
+  filter: brightness(1.1) contrast(1.1) saturate(1.05);
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: high-quality;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: -5px 0;
+}
+
+.logo-text {
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.nav-logo .logo-image:hover {
+  transform: scale(1.05);
+  filter: brightness(1.15) contrast(1.15) saturate(1.1);
+}
+
+.nav-menu {
+  display: flex;
+  list-style: none;
+  gap: 2.5rem;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  flex-wrap: nowrap;
+}
+
+.nav-item {
+  position: relative;
+}
+
+.nav-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.8px;
+  transition: all 0.3s ease;
+  position: relative;
+  padding-bottom: 0.5rem;
+  white-space: nowrap;
+  display: block;
+}
+
+.nav-link:hover {
+  color: #ffffff;
+}
+
+.nav-link.active {
+  color: #ffffff;
+}
+
+.nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #7FDBDA, #5DD5D3);
+  transform: scaleX(1);
+  transition: transform 0.3s ease;
+  border-radius: 2px;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #7FDBDA, #B8E6E5);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+  border-radius: 2px;
+}
+
+.nav-link:hover::after {
+  transform: scaleX(1);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+}
+
+.book-now-btn {
+  background-color: #ffffff;
+  color: #1E3A5F;
+  border: 2px solid #7FDBDA;
+  padding: 0.8rem 2rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  
+}
+
+.book-now-btn:hover {
+  background-color: white;
+  color: #1E3A5F;
+  border-color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+}
+
+/* Special BOOK NOW button in nav menu - Visually Distinct */
+.nav-menu .book-now-link {
+  background: linear-gradient(135deg, #7FDBDA 0%, #5DD5D3 50%, #45C4C2 100%);
+  color: #1E3A5F;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  padding: 0.7rem 1.8rem;
+  border-radius: 60px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  text-decoration: none;
+  display: inline-block;
+ 
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  text-transform: uppercase;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.nav-menu .book-now-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), transparent);
+  opacity: 0;
+  transition: all 0.4s ease;
+  z-index: -1;
+}
+
+.nav-menu .book-now-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: transparent;
+  transform: scaleX(0);
+  transition: none;
+}
+
+.nav-menu .book-now-link:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 8px 28px rgba(69, 196, 194, 0.65);
+  background: linear-gradient(135deg, #8FE4E3 0%, #6DDDDB 50%, #55D0CE 100%);
+  color: #0A1F33;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.nav-menu .book-now-link:hover::before {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.nav-menu .book-now-link:active {
+  transform: translateY(1px) scale(1);
+  box-shadow: 0 3px 12px rgba(69, 196, 194, 0.5);
+  transition: all 0.1s ease;
+}
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.hamburger .bar {
+  width: 25px;
+  height: 3px;
+  background-color: #B8E6E5;
+  margin: 3px 0;
+  transition: 0.3s;
+  border-radius: 2px;
+}
+
+.hamburger.active .bar:nth-child(1) {
+  transform: rotate(-45deg) translate(-5px, 6px);
+}
+
+.hamburger.active .bar:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.active .bar:nth-child(3) {
+  transform: rotate(45deg) translate(-5px, -6px);
+}
+
+/* Authentication Section */
+.auth-section {
+  margin-left: auto;
+  margin-right: 1rem;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* Base button styles */
+.nav-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  border: none;
+  outline: none;
+  z-index: 1;
+}
+
+.nav-btn .btn-text {
+  position: relative;
+  z-index: 2;
+  transition: transform 0.3s ease;
+}
+
+/* Login Button */
+.login-btn {
+  background: transparent;
+  color: #ffffff;
+  border: 2px solid #7FDBDA;
+  box-shadow: 0 2px 6px rgba(127, 219, 218, 0.2);
+}
+
+.login-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(127, 219, 218, 0.15), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(127, 219, 218, 0.3);
+}
+
+.login-btn:hover .btn-text {
+  transform: translateY(-1px);
+}
+
+.login-btn:active {
+  transform: translateY(0);
+  transition: all 0.15s ease;
+}
+
+.login-btn:hover::before {
+  opacity: 1;
+}
+
+/* Sign Up Button */
+.signup-btn {
+  background: linear-gradient(135deg, rgba(127, 219, 218, 0.9), rgba(100, 200, 199, 0.9));
+  color: #0a2e36;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 6px rgba(127, 219, 218, 0.3);
+  font-weight: 700;
+}
+
+.signup-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.signup-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(127, 219, 218, 0.4);
+}
+
+.signup-btn:hover .btn-text {
+  transform: translateY(-1px);
+}
+
+.signup-btn:active {
+  transform: translateY(0);
+  transition: all 0.15s ease;
+}
+
+.signup-btn:hover::before {
+  opacity: 1;
+}
+
+/* Logout Button */
+.logout-btn {
+  background: transparent;
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  padding: 0.5rem 1.25rem;
+  margin-left: 0.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.logout-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.logout-btn:hover .btn-text {
+  transform: translateY(-1px);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
+  transition: all 0.15s ease;
+}
+
+.logout-btn:hover::before {
+  opacity: 1;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .auth-buttons {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+  
+  .nav-btn {
+    width: 100%;
+    justify-content: center;
+    margin: 0.15rem 0;
+  }
+  
+  .logout-btn {
+    margin: 0.25rem 0 0;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Tablet Styles */
+@media screen and (max-width: 1024px) {
+  .nav-menu {
+    gap: 1.5rem;
+  }
+  
+  .nav-link {
+    font-size: 0.85rem;
+  }
+  
+  .navbar {
+    padding: 0 1.5rem;
+  }
+  
+  .book-now-btn {
+    padding: 0.7rem 1.5rem;
+    font-size: 0.85rem;
+  }
+  
+  .nav-logo .logo-image {
+    height: 75px;
+    max-width: 220px;
+    margin: -5px 0;
+  }
+  
+  .logo-text {
+    font-size: 1.3rem;
+  }
+}
+
+/* Mobile Styles for Navbar */
+@media screen and (max-width: 900px) {
+  .auth-section {
+    margin: 0.5rem 0;
+    width: 100%;
+    order: 1;
+  }
+  
+  .auth-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .auth-button,
+  .logout-button {
+    width: 100%;
+    text-align: center;
+    margin: 0.25rem 0;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .nav-menu {
+    position: fixed;
+    left: -100%;
+    top: 80px;
+    flex-direction: column;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(235, 43, 29, 0.98) 20%, rgba(44, 74, 107, 0.98) 50%, rgba(30, 58, 95, 0.98) 100%);
+    backdrop-filter: blur(15px);
+    width: 100%;
+    text-align: center;
+    transition: left 0.3s ease;
+    padding: 2rem 0;
+    gap: 1.5rem;
+    box-shadow: 0 10px 30px rgba(30, 58, 95, 0.5);
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+  }
+
+  .nav-menu.active {
+    left: 0;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+
+  .nav-actions {
+    display: none;
+  }
+
+  .navbar {
+    padding: 0 1rem;
+  }
+  
+  .nav-logo {
+    gap: 0.75rem;
+  }
+  
+  .logo-text {
+    font-size: 1.2rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .nav-logo .logo-image {
+    height: 68px;
+    max-width: 180px;
+    margin: -4px 0;
+  }
+  
+  .nav-logo {
+    gap: 0.5rem;
+  }
+  
+  .logo-text {
+    font-size: 1rem;
+  }
+  
+  .navbar {
+    padding: 0 0.5rem;
+    min-height: 65px;
+  }
+  
+  .nav-menu {
+    top: 65px;
+    max-height: calc(100vh - 65px);
+  }
+  
+  .nav-container {
+    padding: 0.75rem 0;
+  }
+}
+
+/* Large Desktop Styles */
+@media screen and (min-width: 1400px) {
+  .nav-container {
+    max-width: 1600px;
+  }
+  
+  .nav-menu {
+    gap: 3rem;
+  }
+  
+  .nav-link {
+    font-size: 1.1rem;
+  }
+  
+  .nav-logo .logo-image {
+    height: 90px;
+    max-width: 260px;
+    margin: -25px 0;
+    padding-bottom: 5px;
+    
+  }
+  
+  .logo-text {
+    font-size: 1.4rem;
+    color: rgba(44, 74, 107, 0.98);
+  }
+}
+
+
+
+

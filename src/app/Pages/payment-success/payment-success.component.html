@@ -1,0 +1,50 @@
+<div class="success-container">
+  <div class="success-card">
+    <!-- Success Icon -->
+    <div class="success-icon">
+      <span class="material-icons">check_circle</span>
+    </div>
+
+    <!-- Success Message -->
+    <h1 class="success-title">Payment Successful</h1>
+    <p class="success-subtitle">Thank you! Your payment was completed successfully.</p>
+
+    <!-- Order Details Card -->
+    <div class="order-details">
+      <div class="detail-item">
+        <span class="detail-label">Service</span>
+        <span class="detail-value">{{ serviceName }}</span>
+      </div>
+      
+      <div class="detail-item">
+        <span class="detail-label">Price</span>
+        <span class="detail-value">{{ price }}</span>
+      </div>
+      
+      <div class="detail-item">
+        <span class="detail-label">Branch</span>
+        <span class="detail-value">{{ branchName }}</span>
+      </div>
+      
+      <div class="detail-item">
+        <span class="detail-label">Transaction ID</span>
+        <span class="detail-value">{{ transactionId }}</span>
+      </div>
+      
+      <div class="detail-item">
+        <span class="detail-label">Date</span>
+        <span class="detail-value">{{ currentDate }}</span>
+      </div>
+      
+      <div class="detail-item">
+        <span class="detail-label">Time</span>
+        <span class="detail-value">{{ currentTime }}</span>
+      </div>
+    </div>
+
+    <!-- Action Button -->
+    <button class="home-button" (click)="navigateToHome()">
+      Back to Home
+    </button>
+  </div>
+</div>

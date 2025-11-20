@@ -1,0 +1,238 @@
+<div class="booking-container">
+
+  <!-- Steps -->
+  <div class="booking-header">
+    <h1><i class="fas fa-spa"></i> Book Your Appointment</h1>
+    <p class="subtitle">Choose your preferred branch and service</p>
+  </div>
+
+  <div class="booking-steps">
+    <div class="step" [class.active]="!selectedBranch" [class.completed]="selectedBranch" (click)="goToStep(1)">
+      <div class="step-number">1</div>
+      <span>Select Branch</span>
+    </div>
+
+    <div class="step" [class.active]="selectedBranch && !selectedProduct" [class.completed]="selectedProduct" (click)="goToStep(2)">
+      <div class="step-number">2</div>
+      <span>Choose Service</span>
+    </div>
+
+    <div class="step" [class.active]="selectedProduct && !selectedTime" [class.completed]="selectedTime" (click)="goToStep(3)">
+      <div class="step-number">3</div>
+      <span>Select Time</span>
+    </div>
+
+    <div class="step" [class.active]="selectedTime" (click)="goToStep(4)">
+      <div class="step-number">4</div>
+      <span>Confirm Booking</span>
+    </div>
+  </div>
+
+  <!-- ✅ Branches -->
+  <div class="section-container" *ngIf="!selectedBranch">
+    <div class="section-header">
+      <h2><i class="fas fa-map-marker-alt"></i> Available Branches</h2>
+      <p>Select the branch that works best for you</p>
+    </div>
+
+    <div class="card-grid">
+      <div *ngFor="let branch of branches"
+           class="card"
+           [class.selected]="!!selectedBranch && $any(selectedBranch)._id === $any(branch)._id"
+           (click)="selectBranch(branch)">
+        <div class="checkmark"><i class="fas fa-check"></i></div>
+        <div class="card-icon"><i class="fas fa-store"></i></div>
+        <h3>{{ branch.name }}</h3>
+        <p>{{ branch.city }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Select Service card -->
+  <div class="section-container select-service-card" *ngIf="selectedBranch && !selectedTime">
+    <div class="section-header">
+      <h2><i class="fas fa-spa"></i> Select Service</h2>
+      <p>Choose your preferred service</p>
+    </div>
+
+    <div class="card-grid">
+      <div *ngFor="let product of products"
+           class="card service-card"
+           [class.selected]="!!selectedProduct && $any(selectedProduct)._id === $any(product)._id"
+           (click)="selectProduct(product)">
+        <div class="checkmark"><i class="fas fa-check"></i></div>
+        <div class="service-details">
+          <h3>{{ product.name }}</h3>
+          <p class="price">{{ product.price }} EGP</p>
+          <p class="duration"><i class="far fa-clock"></i> {{ product.duration || 60 }} minutes</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="day-time-row" *ngIf="selectedProduct && !selectedTime">
+      <div class="day-time-panel">
+        <div class="panel-column day-control">
+          <div class="panel-title">
+            <h3>Select Date</h3>
+            <p>Choose your preferred appointment date</p>
+          </div>
+
+          <div class="date-picker-wrapper">
+            <button type="button" class="date-input" (click)="toggleDatePicker()">
+              <i class="far fa-calendar-alt"></i>
+              <span class="date-input-label">{{ selectedDay || 'Select a date' }}</span>
+              <i class="fas fa-chevron-down chevron-icon"></i>
+            </button>
+
+            <div class="date-picker-panel" *ngIf="isDatePickerOpen">
+              <div class="date-picker-header">
+                <button type="button" class="nav-btn" (click)="changeMonth(-1)">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="month-label">{{ currentMonth | date:'MMMM yyyy' }}</div>
+                <button type="button" class="nav-btn" (click)="changeMonth(1)">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+
+              <div class="date-picker-body">
+                <div class="weekday-row">
+                  <span *ngFor="let wd of weekdayLabels">{{ wd }}</span>
+                </div>
+
+                <div class="weeks">
+                  <div class="week-row" *ngFor="let week of calendarWeeks">
+                    <button
+                      type="button"
+                      *ngFor="let day of week"
+                      class="day-cell"
+                      [class.outside]="!day.isCurrentMonth"
+                      [class.today]="day.isToday"
+                      [class.selected]="selectedDay === day.displayLabel"
+                      [disabled]="day.isDisabled"
+                      (click)="selectCalendarDate(day)">
+                      {{ day.label }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-column time-control">
+          <div class="panel-title">
+            <h3>Select Time</h3>
+            <p>Available time slots for {{ selectedDay }}</p>
+          </div>
+
+          <div class="time-dropdown-wrapper">
+            <button type="button" class="time-input" (click)="toggleTimeDropdown()">
+              <i class="far fa-clock"></i>
+              <span class="time-input-label">{{ selectedTime || 'Choose a time…' }}</span>
+              <i class="fas fa-chevron-down chevron-icon"></i>
+            </button>
+
+            <div class="time-dropdown-panel" *ngIf="isTimeDropdownOpen">
+              <div class="time-option-list">
+                <button
+                  type="button"
+                  *ngFor="let slot of availableTimeSlots"
+                  class="time-option"
+                  [class.selected]="selectedTime === slot.time"
+                  [class.disabled]="!slot.available"
+                  [disabled]="!slot.available"
+                  (click)="selectTimeFromDropdown(slot)">
+                  <span class="time-option-label">{{ slot.time }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Summary -->
+  <div class="summary-container" *ngIf="selectedTime && selectedProduct && selectedBranch">
+    <div class="summary-header">
+      <h2><i class="fas fa-file-invoice"></i> Booking Summary</h2>
+    </div>
+
+    <div class="summary-content">
+      <div class="summary-item">
+        <span class="label"><i class="fas fa-map-marker-alt"></i> Branch:</span>
+        <span class="value">{{ selectedBranch.name }}</span>
+      </div>
+
+      <div class="summary-item">
+        <span class="label"><i class="fas fa-spa"></i> Service:</span>
+        <span class="value">{{ selectedProduct.name }}</span>
+      </div>
+
+      <div class="summary-item">
+        <span class="label"><i class="fas fa-calendar-alt"></i> Day:</span>
+        <span class="value">{{ formatDayLabel(selectedDay!) }}</span>
+      </div>
+
+      <div class="summary-item">
+        <span class="label"><i class="fas fa-clock"></i> Time:</span>
+        <span class="value">{{ selectedTime }}</span>
+      </div>
+
+      <!-- Points Discount Section (only for logged-in users) -->
+      <div class="points-discount-card" *ngIf="isAuthenticated">
+        <div class="points-header">
+          <div class="points-icon">
+            <i class="fas fa-star"></i>
+          </div>
+          <div class="points-text">
+            <h3>Use Points Discount</h3>
+            <p>You have {{ userPoints }} Points</p>
+          </div>
+        </div>
+
+        <div class="points-body">
+          <p class="conversion-text">
+            {{ userPoints }} Points = {{ userPoints * pointsToCurrencyRate | number:'1.0-2' }} EGP Potential Discount
+          </p>
+          <p class="discount-text" *ngIf="pointsMaxDiscount > 0">
+            Applied Discount (capped by total): {{ pointsMaxDiscount | number:'1.0-2' }} EGP
+          </p>
+
+          <label class="points-toggle">
+            <input
+              type="checkbox"
+              [(ngModel)]="applyPointsDiscount" />
+            <span>Apply Points Discount</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="summary-item total">
+        <span class="label"><i class="fas fa-money-bill-wave"></i> Total:</span>
+        <span class="value">
+          {{ finalTotal | number:'1.0-2' }} EGP
+        </span>
+      </div>
+
+      <button (click)="payNow()" class="pay-btn" [disabled]="isLoading">
+        <i *ngIf="!isLoading" class="fas fa-credit-card"></i>
+        <span *ngIf="!isLoading">Confirm & Pay Now</span>
+        <div *ngIf="isLoading" class="spinner"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loader -->
+  <div *ngIf="isLoading" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Processing your request...</p>
+  </div>
+
+  <!-- Errors -->
+  <div *ngIf="errorMessage" class="error-message">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+
+</div>

@@ -1,0 +1,97 @@
+<div class="services-container">
+  <!-- Background Pattern -->
+  <div class="background-pattern">
+    <div class="bg-circle bg-circle-1"></div>
+    <div class="bg-circle bg-circle-2"></div>
+    <div class="bg-circle bg-circle-3"></div>
+    <div class="bg-circle bg-circle-4"></div>
+  </div>
+
+  <div class="content-wrapper">
+    <!-- Header Section -->
+    <header class="header-section">
+      <h1 class="main-title">
+        {{ title.substring(0, 4) }}<span class="title-accent">{{ title.substring(4) }}</span>
+      </h1>
+      <div class="title-divider"></div>
+      <p class="subtitle">{{ subtitle }}</p>
+    </header>
+
+    <!-- Toggle Section -->
+    <div class="services-toggle">
+      <button
+        type="button"
+        class="toggle-button"
+        [class.active]="activeTab === 'single'"
+        (click)="setTab('single')"
+      >
+        Single Services
+      </button>
+      <button
+        type="button"
+        class="toggle-button"
+        [class.active]="activeTab === 'packages'"
+        (click)="setTab('packages')"
+      >
+        Packages
+      </button>
+    </div>
+
+    <!-- Services Grid -->
+    <main class="services-section" *ngIf="activeTab === 'single'">
+      <div *ngIf="loading" class="loading-spinner">
+        <div class="spinner"></div>
+      </div>
+      <div class="services-grid">
+        <div 
+          class="service-card" 
+          *ngFor="let service of services; trackBy: trackByServiceId"
+          (click)="onServiceCardClick(service)"
+          (mouseenter)="onServiceCardHover(service)"
+          [attr.data-service-id]="service.id"
+        >
+          <div class="service-card-content">
+            <!-- Service Icon -->
+            <div class="service-icon">
+             <i class="fa-solid fa-spa" aria-hidden="true"></i>
+            </div>
+
+            <!-- Service Title -->
+            <h3 class="service-title">{{ service.name }}</h3>
+
+            <!-- Service Description -->
+            <p class="service-description">{{ service.description }}</p>
+
+            <!-- Decorative Divider -->
+            <div class="service-divider"></div>
+          </div>
+
+          <!-- Hover Effect Overlay -->
+          <div class="hover-overlay"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Packages Placeholder -->
+    <main class="services-section packages-placeholder" *ngIf="activeTab === 'packages'">
+      <div class="packages-placeholder-card">
+        <h3>Packages will appear here</h3>
+        <p>We are preparing curated spa packages for you.</p>
+      </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="footer-section">
+      <div class="footer-badge">
+        <p>Experience the perfect blend of luxury and wellness</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Floating Decorative Elements -->
+  <div class="floating-elements">
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+  </div>
+</div>

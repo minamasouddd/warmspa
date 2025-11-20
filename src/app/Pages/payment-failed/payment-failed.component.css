@@ -1,0 +1,119 @@
+.payment-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  padding: 4rem 2rem 2rem; /* Added more top padding */
+  margin-top: 2rem; /* Added top margin */
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 235, 235, 0.15));
+  backdrop-filter: blur(12px);
+}
+
+.payment-card {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 3rem 4rem;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(220, 53, 69, 0.1);
+  border: 2px solid rgba(220, 53, 69, 0.2);
+}
+
+.icon-container {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 2rem;
+}
+
+.icon-container.error {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.title {
+  font-size: 2rem;
+  color: #1E3A5F;
+  margin-bottom: 1.5rem;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600;
+}
+
+.error-message {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  padding: 1.5rem;
+  background-color: #fff5f5;
+  border-radius: 0.75rem;
+  border-left: 4px solid #dc3545;
+}
+
+.error-text {
+  color: #dc3545;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.subtext {
+  color: #6c757d;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.btn {
+  padding: 0.8rem 2.5rem;
+  border: none;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-error {
+  background: linear-gradient(135deg, #dc3545, #e4606d);
+  color: white;
+  box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+}
+
+.btn-error:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
+  background: linear-gradient(135deg, #c82333, #dc3545);
+}
+
+.btn-error:active {
+  transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 576px) {
+  .payment-card {
+    padding: 2rem 1.5rem;
+  }
+  
+  .title {
+    font-size: 1.75rem;
+  }
+  
+  .icon-container {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .error-message {
+    padding: 1rem;
+  }
+  
+  .btn {
+    width: 100%;
+    padding: 0.9rem;
+  }
+}

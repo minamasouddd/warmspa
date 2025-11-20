@@ -1,0 +1,63 @@
+<div class="branches-container">
+  <div class="background-elements">
+    <div class="floating-element element-1"></div>
+    <div class="floating-element element-2"></div>
+    <div class="floating-element element-3"></div>
+    <div class="floating-element element-4"></div>
+  </div>
+
+  <div class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">
+        <span class="title-word">Our</span>
+        <span class="title-word">Branches</span>
+      </h1>
+      <div class="hero-decoration"></div>
+      <p class="hero-subtitle">Find your nearest luxury spa location across Egypt</p>
+    </div>
+  </div>
+  
+  <div class="content-wrapper" *ngIf="!loading && !error">
+    <div class="governorate-section" *ngFor="let governorate of governorates; let i = index">
+      <div class="governorate-header" [style.animation-delay]="(i * 0.15) + 's'">
+        <div class="title-decoration-left"></div>
+        <h2 class="governorate-title">
+          <span class="title-text">{{ governorate.name }}</span>
+        </h2>
+        <div class="title-decoration-right"></div>
+      </div>
+      
+      <div class="branches-grid">
+        <div 
+          class="branch-card" 
+          *ngFor="let branch of governorate.branches; let j = index"
+          [style.animation-delay]="((i * 0.2) + (j * 0.1)) + 's'"
+        >
+          <div class="card-background"></div>
+          <div class="card-content">
+            <div class="branch-icon">
+              <i class="fas fa-spa"></i>
+            </div>
+            <h3 class="branch-name">{{ branch.name }}</h3>
+            <div class="branch-details">
+              <div class="address-wrapper">
+                <i class="fas fa-map-marker-alt address-icon"></i>
+                <p class="branch-address">{{ branch.address }}</p>
+              </div>
+              <a href="tel:{{ branch.phone }}" class="branch-phone">
+                <i class="fas fa-phone phone-icon"></i>
+                <span class="phone-text">{{ branch.phone }}</span>
+              </a>
+            </div>
+          </div>
+          <div class="card-shine"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-spinner">
+    <div class="spinner"></div>
+  </div>
+  <div *ngIf="error" class="error-text">{{ error }}</div>
+</div>

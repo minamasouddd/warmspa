@@ -1,0 +1,157 @@
+/* Main Container */
+.success-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  padding: 4rem 2rem 2rem; /* Added more top padding */
+  margin-top: 2rem; /* Added top margin */
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(184, 230, 229, 0.15));
+  backdrop-filter: blur(12px);
+}
+
+/* Card Styling */
+.success-card {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 3rem 4rem;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(93, 213, 211, 0.15);
+  border: 2px solid rgba(127, 219, 218, 0.3);
+}
+
+/* Success Icon */
+.success-icon {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2e7d32;
+}
+
+.success-icon .material-icons {
+  font-size: 80px;
+  width: auto;
+  height: auto;
+}
+
+/* Typography */
+.success-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.25rem;
+  color: #1E3A5F;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.success-subtitle {
+  color: #2C4A6B;
+  font-size: 1.1rem;
+  margin-bottom: 2.5rem;
+  line-height: 1.6;
+}
+
+/* Order Details */
+.order-details {
+  background-color: #f8f9fa;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 2.5rem;
+  text-align: left;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.detail-label {
+  color: #2C4A6B;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+}
+
+.detail-value {
+  color: #1E3A5F;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Button Styling */
+.home-button {
+  background: linear-gradient(135deg, #45C4C2, #5DD5D3);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 0.9rem 2.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(69, 196, 194, 0.3);
+  width: 100%;
+  max-width: 250px;
+}
+
+.home-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(69, 196, 194, 0.4);
+}
+
+.home-button:active {
+  transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .success-card {
+    padding: 2rem 1.5rem;
+  }
+  
+  .success-title {
+    font-size: 1.75rem;
+  }
+  
+  .success-icon {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .success-icon .material-icons {
+    font-size: 64px;
+  }
+  
+  .success-subtitle {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .order-details {
+    padding: 1.25rem;
+  }
+  
+  .detail-item {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.5rem 0;
+  }
+  
+  .home-button {
+    padding: 0.8rem;
+    max-width: 100%;
+  }
+}

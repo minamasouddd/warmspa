@@ -1,0 +1,16 @@
+<div class="payment-container">
+  <div class="payment-card">
+    <div class="icon-container error">
+      <span class="material-icons">{{ errorIcon }}</span>
+    </div>
+    
+    <h1 class="title">Payment Failed</h1>
+    
+    <div class="error-message">
+      <p class="error-text">{{ errorMessage }}</p>
+      <p class="subtext">Please try again.</p>
+    </div>
+    
+    <button class="btn btn-error" (click)="goToHome()">Back to Home</button>
+  </div>
+</div>

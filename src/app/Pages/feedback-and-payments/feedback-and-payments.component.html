@@ -1,0 +1,129 @@
+<div class="feedback-payments-page">
+  <div class="section">
+    <div class="section-header">
+      <h2>Upcoming Bookings</h2>
+      <p>Upcoming sessions you already paid for and can request a refund.</p>
+    </div>
+
+    <div class="booking-grid" *ngIf="upcomingBookings.length; else noUpcoming">
+      <article class="booking-card" *ngFor="let booking of upcomingBookings" [ngClass]="{ pending: booking.status === 'Pending Refund' }">
+        <div class="booking-info">
+          <div class="branch-title">{{ booking.branchName }} Branch</div>
+          <div class="service-subtitle">{{ booking.service }}</div>
+          <div class="datetime">
+            {{ booking.datetime | date: 'fullDate' }} · {{ booking.datetime | date: 'shortTime' }}
+          </div>
+          <div class="amount">Amount paid: <span>{{ booking.amount | currency }}</span></div>
+          <div class="status">Status: <strong>{{ booking.status }}</strong></div>
+        </div>
+        <div class="booking-actions">
+          <button
+            *ngIf="booking.status === 'Upcoming'"
+            type="button"
+            class="btn outline"
+            (click)="openRefundModal(booking)">
+            Refund
+          </button>
+          <button
+            *ngIf="booking.status === 'Pending Refund'"
+            type="button"
+            class="btn warning"
+            (click)="cancelRefundRequest(booking)">
+            Cancel Refund Request
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <ng-template #noUpcoming>
+      <p class="empty-state">You have no upcoming bookings right now.</p>
+    </ng-template>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <h2>Completed Sessions</h2>
+      <p>Share feedback for sessions you already enjoyed.</p>
+    </div>
+
+    <div class="booking-grid" *ngIf="completedBookings.length; else noCompleted">
+      <article class="booking-card" *ngFor="let booking of completedBookings">
+        <div class="booking-info">
+          <div class="branch-title">{{ booking.branchName }} Branch</div>
+          <div class="service-subtitle">{{ booking.service }}</div>
+          <div class="datetime">
+            {{ booking.datetime | date: 'fullDate' }} · {{ booking.datetime | date: 'shortTime' }}
+          </div>
+          <div class="amount">Amount: <span>{{ booking.amount | currency }}</span></div>
+          <div class="status">Status: <strong>{{ booking.status }}</strong></div>
+        </div>
+        <div class="booking-actions">
+          <button type="button" class="btn primary" (click)="openRatingModal(booking)">{{ getRatingButtonLabel(booking) }}</button>
+        </div>
+      </article>
+    </div>
+
+    <ng-template #noCompleted>
+      <p class="empty-state">You haven’t completed any sessions yet.</p>
+    </ng-template>
+  </div>
+
+  <div class="modal-overlay" *ngIf="isRatingModalOpen">
+    <div class="modal">
+      <header>
+        <h3>Rate {{ selectedRatingBooking?.service }}</h3>
+        <button type="button" class="modal-close" aria-label="Close" (click)="closeRatingModal()">×</button>
+      </header>
+      <section class="rating-grid">
+        <div class="rating-row" *ngFor="let metric of ratingMetrics">
+          <label>{{ ratingLabels[metric] }}</label>
+          <div class="star-row">
+            <button
+              type="button"
+              *ngFor="let star of [1, 2, 3, 4, 5]"
+              (click)="setRatingValue(metric, star)"
+              [class.filled]="getRatingValue(metric) >= star"
+            >
+              ★
+            </button>
+          </div>
+        </div>
+      </section>
+      <section>
+        <label for="comment">Leave a comment (optional)</label>
+        <textarea id="comment" rows="4" [(ngModel)]="ratingComment" placeholder="Share what you loved or what we could improve"></textarea>
+      </section>
+      <footer>
+        <button type="button" class="btn primary" (click)="submitRating()">Submit</button>
+        <button type="button" class="btn outline" (click)="closeRatingModal()">Close</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="modal-overlay" *ngIf="isRefundModalOpen">
+    <div class="modal">
+      <header>
+        <h3>Refund Request</h3>
+        <button type="button" class="modal-close" aria-label="Close" (click)="closeRefundModal()">×</button>
+      </header>
+      <section>
+        <p class="refund-detail">Service: <strong>{{ selectedRefundBooking?.service }}</strong></p>
+        <p class="refund-detail">Branch: <strong>{{ selectedRefundBooking?.branchName }}</strong></p>
+        <p class="refund-detail">Amount: <strong>{{ selectedRefundBooking?.amount | currency }}</strong></p>
+      </section>
+      <section>
+        <label for="refund-reason">Reason for refund</label>
+        <textarea
+          id="refund-reason"
+          rows="4"
+          [(ngModel)]="refundReason"
+          placeholder="Tell us why you are requesting a refund"
+        ></textarea>
+      </section>
+      <footer>
+        <button type="button" class="btn primary" (click)="confirmRefund()">Confirm Refund</button>
+        <button type="button" class="btn outline" (click)="closeRefundModal()">Cancel</button>
+      </footer>
+    </div>
+  </div>
+</div>
