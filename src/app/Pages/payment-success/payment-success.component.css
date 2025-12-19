@@ -4,8 +4,10 @@
   justify-content: center;
   align-items: center;
   min-height: 80vh;
-  padding: 4rem 2rem 2rem; /* Added more top padding */
-  margin-top: 2rem; /* Added top margin */
+  padding: 4rem 2rem 2rem;
+  /* Added more top padding */
+  margin-top: 2rem;
+  /* Added top margin */
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(184, 230, 229, 0.15));
   backdrop-filter: blur(12px);
 }
@@ -121,37 +123,111 @@
   .success-card {
     padding: 2rem 1.5rem;
   }
-  
+
   .success-title {
     font-size: 1.75rem;
   }
-  
+
   .success-icon {
     width: 80px;
     height: 80px;
   }
-  
+
   .success-icon .material-icons {
     font-size: 64px;
   }
-  
+
   .success-subtitle {
     font-size: 1rem;
     margin-bottom: 2rem;
   }
-  
+
   .order-details {
     padding: 1.25rem;
   }
-  
+
   .detail-item {
     flex-direction: column;
     gap: 0.25rem;
     padding: 0.5rem 0;
   }
-  
+
   .home-button {
     padding: 0.8rem;
     max-width: 100%;
   }
+}
+
+.discount-item {
+  background: #fff3e0;
+  border-left: 4px solid #ff9800;
+}
+
+.discount-value {
+  color: #ff5722;
+  font-weight: bold;
+}
+
+.total-item {
+  background: #e8f5e9;
+  border-left: 4px solid #4caf50;
+  margin-top: 10px;
+  padding: 15px !important;
+}
+
+.total-value {
+  color: #2e7d32;
+  font-size: 1.3em;
+  font-weight: bold;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.action-buttons button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s;
+}
+
+.primary {
+  background: #4caf50;
+  color: white;
+}
+
+.secondary {
+  background: #2196f3;
+  color: white;
+}
+
+.note {
+  background: #e3f2fd;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-info {
+  background: #f5f5f5;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 20px;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }

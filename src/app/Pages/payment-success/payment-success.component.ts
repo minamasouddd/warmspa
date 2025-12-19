@@ -1,55 +1,98 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule, ActivatedRoute } from '@angular/router';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Component({
   selector: 'app-payment-success',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule],
   templateUrl: './payment-success.component.html',
   styleUrls: ['./payment-success.component.css']
 })
 export class PaymentSuccessComponent implements OnInit {
-  // Icons
-  checkIcon = 'check_circle';
-  
-  // Payment details
-  transactionId: string = 'TX-12345';
-  serviceName: string = 'Relaxing Massage';
-  price: string = '250 EGP';
-  amount: string = '250 EGP';
-  branchName: string = 'Downtown Branch';
-  currentDate: string = '';
-  currentTime: string = '';
-  
-  // Navigation
-  private router = inject(Router);
-  private route = inject(ActivatedRoute);
+  serviceName = 'Loading...';
+  price = 0;
+  branchName = 'Loading...';
+  bookingDate = 'Loading...';
+  bookingTime = 'Loading...';
+  paymentStatus = 'paid';
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private http: HttpClient
+  ) { }
 
   ngOnInit() {
-    // Get query parameters
-    this.route.queryParams.subscribe(params => {
-      this.transactionId = params['transactionId'] || this.transactionId;
-      this.amount = params['amount'] ? `${params['amount']} EGP` : this.amount;
+    console.log('🟢 START - Component loaded');
+    const sessionId = this.route.snapshot.queryParams['session_id'];
+    console.log('🔍 Session ID:', sessionId);
+
+    if (sessionId) {
+      this.loadOrder(sessionId);
+    } else {
+      console.error('❌ No session_id found');
+    }
+  }
+
+  loadOrder(sessionId: string) {
+    const token = localStorage.getItem('token');
+    console.log('🔑 Token exists:', !!token);
+
+    const headers = new HttpHeaders({
+      'Authorization': `User ${token}`
     });
 
-    // Set current date and time
-    const now = new Date();
-    this.currentDate = now.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      weekday: 'long'
-    });
-    
-    this.currentTime = now.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
+    const url = `https://warm-spa.vercel.app/api/v1/orders/get-order-by-session/${sessionId}`;
+    console.log('📡 API URL:', url);
+
+    this.http.get<any>(url, { headers }).subscribe({
+      next: (res) => {
+        console.log('✅ API Response:', res);
+        const data = res.data;
+
+        this.serviceName = data.items[0].service.name;
+        this.branchName = data.branch.name;
+        this.price = data.totalAmount;
+
+        // IMPORTANT: Use data.date (NOT createdAt) with UTC timezone
+        console.log('📅 Using date field:', data.date);
+        console.log('❌ NOT using createdAt:', data.createdAt);
+
+        const date = new Date(data.date);
+
+        // Add timeZone: 'UTC' to show exact time from API without timezone conversion
+        this.bookingDate = date.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          timeZone: 'UTC'
+        });
+
+        this.bookingTime = date.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: 'UTC'
+        });
+
+        this.paymentStatus = data.paymentStatus;
+
+        console.log('✅ Data populated successfully');
+        console.log('✅ Final Date:', this.bookingDate);
+        console.log('✅ Final Time:', this.bookingTime);
+      },
+      error: (err) => {
+        console.error('❌ API Error:', err);
+        console.error('Status:', err.status);
+        console.error('Message:', err.message);
+      }
     });
   }
 
   navigateToHome() {
-    this.router.navigate(['/']);
+    console.log('🏠 Navigating home');
+    this.router.navigate(['/home']);
   }
 }

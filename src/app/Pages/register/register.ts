@@ -26,7 +26,7 @@ export class RegisterComponent implements OnDestroy {
     'Minya', 'Assiut', 'Sohag', 'Qena', 'Luxor', 'Aswan', 'Red Sea', 'New Valley', 'Matruh',
     'North Sinai', 'South Sinai'
   ];
-  public genders: string[] = ['Male', 'Female', 'Other'];
+  public genders: string[] = ['Male', 'Female'];
 
   private destroy$ = new Subject<void>();
   private readonly PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;

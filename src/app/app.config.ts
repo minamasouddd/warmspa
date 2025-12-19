@@ -6,16 +6,12 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 
 import { routes } from './app.routes';
 
-// Clear auth/session data on app startup so user always starts logged out
+// Initialize auth state on app startup
 function initAuthState(): () => void {
   return () => {
     try {
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-    } catch {
-      // ignore storage errors
-    }
-    try {
+      // Don't clear token on startup - let user stay logged in
+      // Only clear sessionStorage for temporary data
       sessionStorage.clear();
     } catch {
       // ignore storage errors
@@ -25,16 +21,33 @@ function initAuthState(): () => void {
 
 // interceptor function
 const authInterceptor = (req: any, next: any) => {
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; 
+  // Get token from localStorage
+  const token = localStorage.getItem('token');
 
   if (token) {
+    console.log('🔑 Token found in localStorage');
+    console.log('📏 Token length:', token.length);
+    console.log('🔍 Token value:', token);
+    console.log('✅ Is valid JWT?', token.split('.').length === 3 ? 'Yes' : 'No');
+    
+    // Use "User" prefix as per API documentation
+    const authHeader = `User ${token}`;
+    
+    console.log('📤 Authorization header:', authHeader);
+    console.log('🌐 Request URL:', req.url);
+
     const cloned = req.clone({
       setHeaders: {
-        Authorization: `User ${token}`
+        Authorization: authHeader
       }
     });
+    
+    console.log('✅ Interceptor applied successfully');
     return next(cloned);
   }
+  
+  console.log('❌ No token found in localStorage');
+  console.log('🔑 Available keys:', Object.keys(localStorage));
   return next(req);
 };
 

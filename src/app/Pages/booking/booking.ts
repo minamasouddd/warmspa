@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { BookingService, Product } from '../../services/booking.service';
 import { AuthService } from '../../services/auth.service';
+import { OrdersService } from '../../services/orders.service';
 
 interface TimeSlot {
   time: string;
@@ -26,50 +28,95 @@ interface CalendarDay {
   templateUrl: './booking.html',
   styleUrls: ['./booking.css']
 })
-export class BookingComponent implements OnInit {
+export class BookingComponent implements OnInit, OnDestroy {
   branches: any[] = [];
   products: Product[] = [];
   selectedBranch: any = null;
   selectedProduct: Product | null = null;
   selectedDay: string | null = null;
+  selectedDayDate: Date | null = null;
   selectedTime: string | null = null;
   availableDays: string[] = [];
   availableTimeSlots: TimeSlot[] = [];
   isLoading = false;
   errorMessage = '';
 
-  // Calendar state for date picker
   currentMonth: Date = new Date();
   calendarWeeks: CalendarDay[][] = [];
   isDatePickerOpen: boolean = false;
   weekdayLabels: string[] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  // Time dropdown state
   isTimeDropdownOpen: boolean = false;
 
-  // Points discount state
   isAuthenticated: boolean = false;
   userPoints: number = 0;
-  pointsToCurrencyRate: number = 0.5; // 1 Point = 0.50 EGP (can be adjusted later)
   applyPointsDiscount: boolean = false;
+  userName: string | null = null;
+  userEmail: string | null = null;
+  
+  // Points redemption tracking
+  pointsRedeemed: number = 0;
+  actualDiscountApplied: number = 0;
+  remainingPointsAfterRedemption: number = 0;
+  
+  // Expose Math to template
+  Math = Math;
+  
+  // Voucher properties (SINGLE DECLARATION - NO DUPLICATES)
+  voucherCode: string = '';
+  voucherDiscount: number = 0;
+  voucherMessage: string = '';
+  voucherApplied: boolean = false;
+  originalProductPrice: number | null = null;
+  private productSubscriptions: Subscription[] = [];
 
-  constructor(private bookingService: BookingService, private authService: AuthService) {}
+  constructor(
+    private bookingService: BookingService,
+    private authService: AuthService,
+    private ordersService: OrdersService
+  ) {}
+
+  ngOnDestroy(): void {
+    this.productSubscriptions.forEach(subscription => subscription.unsubscribe());
+    this.productSubscriptions = [];
+  }
 
   ngOnInit(): void {
     this.loadBranches();
-
     this.isAuthenticated = this.authService.isLoggedIn();
+    
     if (this.isAuthenticated) {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          const parsed = JSON.parse(storedUser);
-          this.userPoints = parsed?.points ?? 0;
-        } catch {
-          this.userPoints = 0;
+      this.loadUserData();
+    }
+  }
+
+  // ===== Load User Data from API =====
+  loadUserData(): void {
+    this.ordersService.getUserData().subscribe({
+      next: (res: any) => {
+        console.log('✅ User data loaded:', res);
+        this.userPoints = res.userData.points || 0;
+        this.userName = res.userData.name || null;
+        this.userEmail = res.userData.email || null;
+        
+        // Update localStorage with fresh data
+        localStorage.setItem('user', JSON.stringify(res.userData));
+      },
+      error: (err: any) => {
+        console.error('❌ Error loading user data:', err);
+        // Fallback to localStorage if API fails
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            const parsed = JSON.parse(storedUser);
+            this.userPoints = parsed?.points ?? 0;
+            this.userName = parsed?.name ?? null;
+            this.userEmail = parsed?.email ?? null;
+          } catch {
+            this.userPoints = 0;
+          }
         }
       }
-    }
+    });
   }
 
   loadBranches() {
@@ -77,9 +124,11 @@ export class BookingComponent implements OnInit {
     this.bookingService.getAllBranches().subscribe({
       next: (res) => {
         this.branches = res.data.branches || [];
+        console.log('✅ Branches loaded:', this.branches.length);
         this.isLoading = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('❌ Error loading branches:', err);
         this.errorMessage = 'Error loading branches';
         this.isLoading = false;
       }
@@ -101,14 +150,42 @@ export class BookingComponent implements OnInit {
     this.errorMessage = '';
     this.isLoading = true;
 
+    // Reset points discount when changing branch
+    this.applyPointsDiscount = false;
+    this.resetPointsRedemption();
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    console.log("Selected Branch:", branch);
-
-    // استخراج الأيام المتاحة من workingHours
     this.extractAvailableDays(branch.workingHours);
 
+    console.log('🔍 Branch selected:', branch.name, branch._id);
+    console.log('📋 Branch services:', branch.services);
+    
+    this.bookingService.getProductsByBranch(branch._id).subscribe({
+      next: (res: any) => {
+        console.log('✅ Products API Response:', res);
+        
+        if (res?.data?.products && res.data.products.length > 0) {
+          this.products = res.data.products;
+          console.log('📦 Products loaded from API:', this.products.length);
+          this.isLoading = false;
+        } else {
+          console.warn('⚠️ No products from API, trying fallback...');
+          this.loadProductsFallback(branch);
+        }
+      },
+      error: (err: any) => {
+        console.error('❌ API Error:', err);
+        console.warn('⚠️ Using fallback method...');
+        this.loadProductsFallback(branch);
+      }
+    });
+  }
+
+  loadProductsFallback(branch: any) {
+    console.log('🔄 FALLBACK: Loading products from branch.services');
+    
     if (!branch.services || branch.services.length === 0) {
+      console.error('❌ No services array in branch');
       this.errorMessage = 'No services available for this branch.';
       this.isLoading = false;
       return;
@@ -118,32 +195,46 @@ export class BookingComponent implements OnInit {
       .map((s: any) => s.serviceId || s._id)
       .filter(Boolean);
 
-    console.log("Extracted Service IDs:", serviceIds);
+    console.log('🔑 Service IDs to load:', serviceIds);
 
     if (serviceIds.length === 0) {
-      this.errorMessage = 'No valid services found for this branch.';
+      console.error('❌ No valid service IDs found');
+      this.errorMessage = 'No valid services found.';
       this.isLoading = false;
       return;
     }
 
-    let completedRequests = 0;
+    let completed = 0;
 
     serviceIds.forEach((id: string) => {
-      this.bookingService.getProductById(id).subscribe({
+      console.log('⏳ Loading product:', id);
+      
+      const subscription = this.bookingService.getProductById(id).subscribe({
         next: (res) => {
           if (res?.data?.product) {
             this.products.push(res.data.product);
+            console.log('✅ Product added:', res.data.product.name);
           }
         },
-        error: () => console.warn("Failed to load product with ID:", id),
+        error: (err) => {
+          console.error('❌ Failed to load product:', id, err);
+        },
         complete: () => {
-          completedRequests++;
-          if (completedRequests === serviceIds.length) {
+          completed++;
+          console.log(`📊 Progress: ${completed}/${serviceIds.length}`);
+          
+          if (completed === serviceIds.length) {
+            console.log('✅ All products loaded:', this.products.length);
             this.isLoading = false;
-            console.log("All products loaded:", this.products);
+            
+            if (this.products.length === 0) {
+              this.errorMessage = 'No services available.';
+            }
           }
         }
       });
+      
+      this.productSubscriptions.push(subscription);
     });
   }
 
@@ -153,34 +244,23 @@ export class BookingComponent implements OnInit {
     this.selectedTime = null;
     this.availableTimeSlots = [];
     this.isTimeDropdownOpen = false;
-    console.log("Selected Product ID:", product._id);
+    
+    // Reset points discount when changing service
+    this.applyPointsDiscount = false;
+    this.resetPointsRedemption();
+    
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // استخراج الأيام المتاحة من workingHours
   extractAvailableDays(workingHours: any) {
-    const daysMap: any = {
-      'monday': 'الإثنين',
-      'tuesday': 'الثلاثاء',
-      'wednesday': 'الأربعاء',
-      'thursday': 'الخميس',
-      'friday': 'الجمعة',
-      'saturday': 'السبت',
-      'sunday': 'الأحد'
-    };
-
     this.availableDays = [];
-    
     Object.keys(workingHours).forEach(day => {
       if (workingHours[day] !== 'Closed' && workingHours[day] !== '') {
         this.availableDays.push(day);
       }
     });
-    // Rebuild calendar when working hours change so disabled days reflect branch schedule
     this.buildCalendar();
   }
-
-  // Calendar helpers
 
   toggleDatePicker() {
     this.isDatePickerOpen = !this.isDatePickerOpen;
@@ -197,7 +277,7 @@ export class BookingComponent implements OnInit {
     const year = this.currentMonth.getFullYear();
     const month = this.currentMonth.getMonth();
     const firstOfMonth = new Date(year, month, 1);
-    const startDay = firstOfMonth.getDay(); // 0 (Sun) - 6 (Sat)
+    const startDay = firstOfMonth.getDay();
     const startDate = new Date(year, month, 1 - startDay);
 
     const today = new Date();
@@ -210,12 +290,35 @@ export class BookingComponent implements OnInit {
       for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
         const cellDate = new Date(startDate);
         cellDate.setDate(startDate.getDate() + weekIndex * 7 + dayIndex);
+        cellDate.setHours(0, 0, 0, 0);
 
         const isCurrentMonth = cellDate.getMonth() === month;
         const isToday = this.isSameDate(cellDate, today);
 
         const weekdayKey = this.getWeekdayKey(cellDate);
         let isDisabled = false;
+        
+        if (cellDate < today) {
+          isDisabled = true;
+        }
+        
+        if (isToday && this.selectedBranch && this.selectedBranch.workingHours) {
+          const workingHour = this.selectedBranch.workingHours[weekdayKey as keyof typeof this.selectedBranch.workingHours];
+          if (workingHour && workingHour !== 'Closed') {
+            const timeRange = workingHour.split('-');
+            if (timeRange.length === 2) {
+              const endTime = this.parseTime(timeRange[1].trim());
+              if (endTime) {
+                const now = new Date();
+                const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();
+                if (currentTimeInMinutes >= endTime) {
+                  isDisabled = true;
+                }
+              }
+            }
+          }
+        }
+        
         if (this.selectedBranch && this.selectedBranch.workingHours) {
           const workingHour = this.selectedBranch.workingHours[weekdayKey as keyof typeof this.selectedBranch.workingHours];
           if (!workingHour || workingHour === 'Closed') {
@@ -262,6 +365,7 @@ export class BookingComponent implements OnInit {
     }
 
     this.selectedDay = day.displayLabel;
+    this.selectedDayDate = day.date;
     this.selectedTime = null;
     this.isDatePickerOpen = false;
     this.isTimeDropdownOpen = false;
@@ -273,15 +377,12 @@ export class BookingComponent implements OnInit {
     }
   }
 
-  // توليد الأوقات المتاحة بناءً على ساعات العمل
   generateTimeSlots(workingHour: string) {
     this.availableTimeSlots = [];
-    
     if (!workingHour || workingHour === 'Closed') {
       return;
     }
 
-    // استخراج وقت البداية والنهاية من النص مثل "9:00 AM - 6:00 PM"
     const timeRange = workingHour.split('-');
     if (timeRange.length !== 2) return;
 
@@ -290,19 +391,22 @@ export class BookingComponent implements OnInit {
 
     if (!startTime || !endTime) return;
 
-    // توليد فترات زمنية كل ساعة
+    const now = new Date();
+    const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();
+    const isBookingToday = this.selectedDayDate && this.isSameDate(this.selectedDayDate, now);
+
     let currentTime = startTime;
     while (currentTime < endTime) {
       const timeString = this.formatTime(currentTime);
+      const isAvailable = !isBookingToday || currentTime > currentTimeInMinutes;
       this.availableTimeSlots.push({
         time: timeString,
-        available: true
+        available: isAvailable
       });
-      currentTime += 60; // إضافة ساعة (60 دقيقة)
+      currentTime += 60;
     }
   }
 
-  // تحويل النص إلى دقائق من منتصف الليل
   parseTime(timeStr: string): number | null {
     const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
     if (!match) return null;
@@ -320,7 +424,6 @@ export class BookingComponent implements OnInit {
     return hours * 60 + minutes;
   }
 
-  // تحويل الدقائق إلى نص الوقت
   formatTime(minutes: number): string {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -355,26 +458,147 @@ export class BookingComponent implements OnInit {
     if (!day) {
       return '';
     }
-    // Keep existing behavior for any remaining usages
     return day.charAt(0).toUpperCase() + day.slice(1).toLowerCase();
   }
 
-  get pointsMaxDiscount(): number {
-    if (!this.selectedProduct) {
+  // ===== Points Discount Calculation =====
+  calculateMaxPointsDiscount(): number {
+    if (!this.selectedProduct || this.userPoints < 10000) {
       return 0;
     }
-    const rawDiscount = this.userPoints * this.pointsToCurrencyRate;
-    return Math.min(rawDiscount, this.selectedProduct.price);
+
+    // Calculate how many 10k increments can be redeemed
+    const increments = Math.floor(this.userPoints / 10000);
+    
+    // Formula: discount = 100 + (n - 1) × 200
+    const potentialDiscount = 100 + (increments - 1) * 200;
+    
+    // Cap discount at product price
+    return Math.min(potentialDiscount, this.selectedProduct.price);
+  }
+
+  get pointsMaxDiscount(): number {
+    return this.calculateMaxPointsDiscount();
   }
 
   get finalTotal(): number {
     if (!this.selectedProduct) {
       return 0;
     }
-    if (!this.applyPointsDiscount) {
-      return this.selectedProduct.price;
+    let total = this.selectedProduct.price;
+    
+    // Apply points discount (using actual discount from API if available)
+    if (this.applyPointsDiscount && this.actualDiscountApplied > 0) {
+      total -= this.actualDiscountApplied;
     }
-    return this.selectedProduct.price - this.pointsMaxDiscount;
+    
+    return Math.max(0, total);
+  }
+
+  // ===== Reset Points Redemption =====
+  private resetPointsRedemption(): void {
+    this.pointsRedeemed = 0;
+    this.actualDiscountApplied = 0;
+    this.remainingPointsAfterRedemption = 0;
+  }
+
+  applyVoucher(): void {
+    if (!this.voucherCode.trim()) {
+      this.voucherMessage = 'Please enter a voucher code';
+      this.voucherApplied = false;
+      this.voucherDiscount = 0;
+      return;
+    }
+
+    if (!this.selectedProduct) {
+      this.voucherMessage = 'Please select a service first';
+      return;
+    }
+
+    this.isLoading = true;
+    this.voucherMessage = 'Validating voucher...';
+
+    const serviceId = this.selectedProduct._id;
+    const code = this.voucherCode.trim();
+
+    console.log('🎟️ Applying voucher:', { serviceId, code });
+
+    this.bookingService.applyVoucher(serviceId, code).subscribe({
+      next: (res: any) => {
+        console.log('✅ Voucher Response:', res);
+        console.log('📦 Full Response:', JSON.stringify(res, null, 2));
+        
+        // Try multiple paths to get the final price
+        const newPrice = res?.finalPrice 
+                      || res?.data?.finalPrice
+                      || res?.serviceDate?.price 
+                      || res?.data?.price 
+                      || res?.price 
+                      || res?.data?.serviceDate?.price;
+        
+        // Get discount amount from response
+        const discountAmount = res?.discountAmount || res?.data?.discountAmount || 0;
+        
+        if (newPrice !== undefined && newPrice !== null) {
+          if (this.originalProductPrice === null) {
+            this.originalProductPrice = this.selectedProduct!.price;
+          }
+          
+          // Use discount from API response if available, otherwise calculate
+          this.voucherDiscount = discountAmount || Math.max(0, this.originalProductPrice - newPrice);
+          
+          this.voucherApplied = true;
+          this.voucherMessage = `✓ Voucher applied! Discount: ${this.voucherDiscount.toFixed(2)} EGP`;
+          
+          this.selectedProduct!.price = newPrice;
+          
+          console.log('💰 Price updated:', { 
+            originalPrice: this.originalProductPrice, 
+            newPrice, 
+            discount: this.voucherDiscount 
+          });
+        } else {
+          console.error('❌ Price not found in response:', res);
+          this.voucherMessage = '✗ Invalid response from server';
+          this.voucherApplied = false;
+        }
+        
+        this.isLoading = false;
+      },
+      error: (err: any) => {
+        console.error('❌ Voucher error:', err);
+        
+        let errorMsg = '✗ Invalid voucher code';
+        
+        if (err.error?.message) {
+          errorMsg = `✗ ${err.error.message}`;
+        } else if (err.status === 404) {
+          errorMsg = '✗ Voucher not found';
+        } else if (err.status === 409) {
+          errorMsg = '✗ Voucher already used or expired';
+        } else if (err.status === 401) {
+          errorMsg = '✗ Please log in to use vouchers';
+        }
+        
+        this.voucherMessage = errorMsg;
+        this.voucherApplied = false;
+        this.voucherDiscount = 0;
+        this.isLoading = false;
+      }
+    });
+  }
+
+  clearVoucher(): void {
+    if (this.voucherApplied && this.selectedProduct && this.originalProductPrice !== null) {
+      this.selectedProduct.price = this.originalProductPrice;
+      console.log('🔄 Price restored to:', this.selectedProduct.price);
+    }
+    
+    this.voucherCode = '';
+    this.voucherDiscount = 0;
+    this.voucherApplied = false;
+    this.voucherMessage = '';
+    this.originalProductPrice = null;
   }
 
   goToStep(step: number) {
@@ -388,6 +612,7 @@ export class BookingComponent implements OnInit {
         this.availableDays = [];
         this.availableTimeSlots = [];
         this.errorMessage = '';
+        this.resetPointsRedemption();
         break;
       case 2:
         if (this.selectedBranch) {
@@ -395,6 +620,7 @@ export class BookingComponent implements OnInit {
           this.selectedDay = null;
           this.selectedTime = null;
           this.availableTimeSlots = [];
+          this.resetPointsRedemption();
         }
         break;
       case 3:
@@ -409,35 +635,179 @@ export class BookingComponent implements OnInit {
 
   payNow() {
     if (!this.selectedBranch || !this.selectedProduct) {
-      return alert("Please select a branch and a service");
+      return alert('Please select a branch and a service');
     }
 
     if (!this.selectedDay || !this.selectedTime) {
-      return alert("Please select a day and time for your appointment");
+      return alert('Please select a day and time for your appointment');
     }
 
-    console.log("BRANCH ID:", this.selectedBranch._id);
-    console.log("PRODUCT ID:", this.selectedProduct._id);
-    console.log("SELECTED DAY:", this.selectedDay);
-    console.log("SELECTED TIME:", this.selectedTime);
+    const formattedDate = this.formatDateForAPI(this.selectedDayDate, this.selectedTime);
+
+    // Calculate points to redeem (in 10k increments)
+    let pointsToRedeem = 0;
+    if (this.applyPointsDiscount && this.userPoints >= 10000) {
+      pointsToRedeem = Math.floor(this.userPoints / 10000) * 10000;
+    }
+
+    try {
+      const bookingSummary = {
+        serviceName: this.selectedProduct.name,
+        branchName: this.selectedBranch.name,
+        bookingDate: this.selectedDay,
+        bookingTime: this.selectedTime,
+        originalPrice: this.selectedProduct.price,
+        finalTotal: this.finalTotal,
+        pointsDiscountApplied: this.applyPointsDiscount,
+        pointsToRedeem: pointsToRedeem,
+        pointsDiscountAmount: this.applyPointsDiscount ? this.actualDiscountApplied : 0,
+        voucherApplied: this.voucherApplied,
+        voucherDiscount: this.voucherDiscount,
+        paymentMethod: 'Online Payment',
+        user: {
+          name: this.userName,
+          email: this.userEmail
+        },
+        createdAt: new Date().toISOString()
+      };
+      sessionStorage.setItem('latestBookingSummary', JSON.stringify(bookingSummary));
+      
+      // Store points redemption info for after payment
+      if (this.applyPointsDiscount && pointsToRedeem > 0) {
+        sessionStorage.setItem('pendingPointsRedemption', JSON.stringify({
+          pointsToRedeem,
+          userPoints: this.userPoints
+        }));
+      }
+    } catch (e) {
+      console.warn('Failed to store latest booking summary', e);
+    }
 
     const branchId = this.selectedBranch._id;
     const productId = this.selectedProduct._id;
 
-    // إرسال اليوم والوقت مع بيانات الحجز
-    this.bookingService.createPaymentIntent(branchId, productId, this.selectedDay, this.selectedTime).subscribe({
+    console.log('📤 Sending payment request with:', {
+      branchId,
+      productId,
+      serviceName: this.selectedProduct.name,
+      finalPrice: this.finalTotal,
+      date: formattedDate,
+      pointsToRedeem
+    });
+
+    this.bookingService.createPaymentIntent(
+      branchId, 
+      productId, 
+      formattedDate, 
+      this.selectedTime,
+      this.selectedProduct.name,
+      this.finalTotal
+    ).subscribe({
       next: (res: any) => {
-        console.log("Payment API Response:", res);
+        console.log('✅ PAYMENT INTENT RESPONSE:', res);
+        localStorage.setItem('lastPaymentIntentResponse', JSON.stringify(res));
+        
+        const orderId = res._id || res.data?._id || res.orderId || res.data?.orderId;
+        
+        if (orderId) {
+          sessionStorage.setItem('orderId', orderId);
+          console.log('💾 Order ID saved:', orderId);
+          
+          // If points discount is applied, call redeem API AFTER order is created
+          if (this.applyPointsDiscount && pointsToRedeem > 0) {
+            this.redeemPointsForOrder(orderId, pointsToRedeem);
+          }
+        } else {
+          console.warn('⚠️ No orderId found in response:', res);
+        }
+        
         if (res.redirectLink) {
           window.location.href = res.redirectLink;
         } else {
-          alert("No redirect link received.");
+          alert('No redirect link received.');
         }
       },
       error: (err) => {
-        console.error("Payment Error:", err);
-        alert("Payment failed. Check console.");
+        console.error('❌ Payment Error:', err);
+        localStorage.setItem('lastPaymentError', JSON.stringify({
+          error: err.message || err,
+          timestamp: new Date().toISOString()
+        }));
+        alert('Payment failed. Check console.');
       }
     });
+  }
+
+  // ===== Call Redeem Points API =====
+  private redeemPointsForOrder(orderId: string, pointsToRedeem: number): void {
+    console.log('🎯 Redeeming points:', { orderId, pointsToRedeem });
+    
+    this.ordersService.redeemPoints(orderId, pointsToRedeem).subscribe({
+      next: (res: any) => {
+        console.log('✅ Points redeemed successfully:', res);
+        this.pointsRedeemed = res.data.pointsRedeemed;
+        this.actualDiscountApplied = res.data.discountApplied;
+        this.remainingPointsAfterRedemption = res.data.remainingPoints;
+        
+        // Update user points in localStorage
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            const user = JSON.parse(storedUser);
+            user.points = res.data.remainingPoints;
+            localStorage.setItem('user', JSON.stringify(user));
+            this.userPoints = res.data.remainingPoints;
+          } catch (e) {
+            console.error('Failed to update user points:', e);
+          }
+        }
+        
+        // Store redemption success for payment success page
+        sessionStorage.setItem('pointsRedemptionSuccess', JSON.stringify({
+          pointsRedeemed: res.data.pointsRedeemed,
+          discountApplied: res.data.discountApplied,
+          remainingPoints: res.data.remainingPoints
+        }));
+      },
+      error: (err: any) => {
+        console.error('❌ Points redemption failed:', err);
+        
+        let errorMsg = 'Failed to redeem points';
+        if (err.error?.message) {
+          errorMsg = err.error.message;
+        } else if (err.error?.error?.en) {
+          errorMsg = err.error.error.en;
+        }
+        
+        // Don't block payment, just log the error
+        console.warn('⚠️ Continuing with payment despite points redemption failure');
+        sessionStorage.setItem('pointsRedemptionError', errorMsg);
+      }
+    });
+  }
+
+  private formatDateForAPI(date: Date | null, time: string | null): string {
+    if (!date || !time) return '';
+    
+    const timeMatch = time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (!timeMatch) return '';
+    
+    let hours = parseInt(timeMatch[1], 10);
+    const minutes = parseInt(timeMatch[2], 10);
+    const period = timeMatch[3].toUpperCase();
+    
+    if (period === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hoursStr = String(hours).padStart(2, '0');
+    const minutesStr = String(minutes).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hoursStr}:${minutesStr}:00Z`;
   }
 }

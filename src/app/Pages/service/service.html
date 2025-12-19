@@ -25,7 +25,7 @@
         [class.active]="activeTab === 'single'"
         (click)="setTab('single')"
       >
-        Single Services
+        Services
       </button>
       <button
         type="button"
@@ -33,7 +33,15 @@
         [class.active]="activeTab === 'packages'"
         (click)="setTab('packages')"
       >
-        Packages
+        course
+      </button>
+      <button
+        type="button"
+        class="toggle-button"
+        [class.active]="activeTab === 'gym'"
+        (click)="setTab('gym')"
+      >
+        Gym
       </button>
     </div>
 

@@ -13,7 +13,7 @@ export class AuthService {
   // Public observable for components to subscribe to
   public isLoggedIn$ = this.isLoggedInSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // ===== Send OTP =====
   sendOtp(data: { email: string }): Observable<any> {
@@ -46,21 +46,15 @@ export class AuthService {
   }
 
   // ===== Register =====
- register(data: { name: string; email: string; phone: string; password: string; city: string; gender: string }): Observable<any> {
-  return this.http.post(`${this.baseUrlV1}/signup`, data);
-}
-
-
+  register(data: { name: string; email: string; phone: string; password: string; city: string; gender: string }): Observable<any> {
+    return this.http.post(`${this.baseUrlV1}/signup`, data);
+  }
 
   // ===== Session Handling =====
   setSession(user: any, token: string): void {
     localStorage.setItem('user', JSON.stringify(user));
     localStorage.setItem('token', token);
     this.isLoggedInSubject.next(true);
-  }
-
-  getUserToken(): string | null {
-    return localStorage.getItem('token');
   }
 
   getToken(): string | null {
@@ -82,9 +76,8 @@ export class AuthService {
     const token = this.getToken();
     if (!token) return new HttpHeaders();
 
-    // لو الـ endpoint خاص بالـ orders يبقى نوع الـ token مختلف
-    const isOrderEndpoint = endpoint?.includes('/orders/');
-    const authType = isOrderEndpoint ? 'User' : 'Bearer';
+    // All endpoints use 'User' authorization type
+    const authType = 'User';
 
     return new HttpHeaders({
       'Authorization': `${authType} ${token}`,

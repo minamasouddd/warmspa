@@ -1,0 +1,186 @@
+<div class="gym-container">
+  <!-- Background Pattern -->
+  <div class="background-pattern">
+    <div class="bg-circle bg-circle-1"></div>
+    <div class="bg-circle bg-circle-2"></div>
+    <div class="bg-circle bg-circle-3"></div>
+    <div class="bg-circle bg-circle-4"></div>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <i class="fas fa-dumbbell"></i>
+        <span>Premium Fitness Center</span>
+      </div>
+      <h1 class="hero-title">
+        Train Smarter in a<br>
+        <span class="title-accent">Fully Equipped Modern Gym</span>
+      </h1>
+      <p class="hero-description">
+        Experience the perfect blend of quality equipment, professional guidance, and a comfortable atmosphere. 
+        Whether you're building strength, improving cardio, or recovering from injury, our gym provides everything you need.
+      </p>
+      <div class="hero-actions">
+        <button class="btn-primary" (click)="scrollToSection('features')">
+          <i class="fas fa-star"></i> Explore Features
+        </button>
+        <button class="btn-secondary" (click)="scrollToSection('trainers')">
+          <i class="fas fa-user-friends"></i> Meet Our Trainers
+        </button>
+      </div>
+    </div>
+    <div class="hero-image-grid">
+      <div class="hero-image hero-image-1">
+        <div class="image-placeholder">
+          <i class="fas fa-dumbbell"></i>
+        </div>
+      </div>
+      <div class="hero-image hero-image-2">
+        <div class="image-placeholder">
+          <i class="fas fa-running"></i>
+        </div>
+      </div>
+      <div class="hero-image hero-image-3">
+        <div class="image-placeholder">
+          <i class="fas fa-heartbeat"></i>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About the Gym Section -->
+  <section class="about-section" id="about">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-badge">About Our Gym</span>
+        <h2 class="section-title">Equipped with the Latest Fitness Machines</h2>
+        <p class="section-subtitle">
+          Our gym features state-of-the-art equipment designed to support every aspect of your fitness journey
+        </p>
+      </div>
+
+      <div class="about-content">
+        <div class="about-text">
+          <p class="about-description">
+            Our modern fitness center is equipped with the latest generation of training equipment, 
+            carefully selected to provide you with the best workout experience. From advanced cardio machines 
+            to comprehensive strength training equipment, we have everything you need to achieve your goals.
+          </p>
+          
+          <div class="gym-types-grid">
+            <div class="gym-type-card" *ngFor="let type of gymTypes">
+              <div class="gym-type-icon">
+                <i class="fas" [ngClass]="type.icon"></i>
+              </div>
+              <h3 class="gym-type-title">{{ type.title }}</h3>
+              <p class="gym-type-description">{{ type.description }}</p>
+            </div>
+          </div>
+
+          <div class="about-highlights">
+            <div class="highlight-item">
+              <i class="fas fa-check-circle"></i>
+              <span>Clean, spacious, and well-organized environment</span>
+            </div>
+            <div class="highlight-item">
+              <i class="fas fa-check-circle"></i>
+              <span>Professional-grade equipment for all fitness levels</span>
+            </div>
+            <div class="highlight-item">
+              <i class="fas fa-check-circle"></i>
+              <span>Comfortable temperature control and ventilation</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="about-image">
+          <div class="image-placeholder-large">
+            <i class="fas fa-dumbbell"></i>
+            <p>Modern Gym Equipment</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trainers & Rehabilitation Section -->
+  <section class="trainers-section" id="trainers">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-badge">Expert Guidance</span>
+        <h2 class="section-title">Trainers & Rehabilitation Specialists</h2>
+        <p class="section-subtitle">
+          Professional support from certified trainers and rehabilitation specialists
+        </p>
+      </div>
+
+      <div class="trainers-grid">
+        <div class="trainer-card" *ngFor="let trainer of trainers">
+          <div class="trainer-icon">
+            <i class="fas" [ngClass]="trainer.icon"></i>
+          </div>
+          <h3 class="trainer-name">{{ trainer.name }}</h3>
+          <span class="trainer-specialty">{{ trainer.specialty }}</span>
+          <p class="trainer-description">{{ trainer.description }}</p>
+          <div class="trainer-divider"></div>
+        </div>
+      </div>
+
+      <div class="rehabilitation-info">
+        <div class="rehab-card">
+          <div class="rehab-icon">
+            <i class="fas fa-heartbeat"></i>
+          </div>
+          <div class="rehab-content">
+            <h3>Specialized Rehabilitation Programs</h3>
+            <p>
+              Our rehabilitation programs focus on safe, effective recovery from injuries, post-surgery care, 
+              and chronic pain management. We work closely with each client to create personalized plans that 
+              promote healing while building strength and mobility.
+            </p>
+            <ul class="rehab-list">
+              <li><i class="fas fa-check"></i> Injury recovery and prevention</li>
+              <li><i class="fas fa-check"></i> Post-surgery rehabilitation</li>
+              <li><i class="fas fa-check"></i> Chronic pain management</li>
+              <li><i class="fas fa-check"></i> Safe training for beginners and athletes</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features-section" id="features">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-badge">Why Choose Us</span>
+        <h2 class="section-title">Premium Features & Highlights</h2>
+        <p class="section-subtitle">
+          Everything you need for a complete fitness experience
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card" *ngFor="let feature of features">
+          <div class="feature-icon">
+            <i class="fas" [ngClass]="feature.icon"></i>
+          </div>
+          <h3 class="feature-title">{{ feature.title }}</h3>
+          <p class="feature-description">{{ feature.description }}</p>
+          <div class="feature-shine"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Floating Decorative Elements -->
+  <div class="floating-elements">
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+  </div>
+</div>

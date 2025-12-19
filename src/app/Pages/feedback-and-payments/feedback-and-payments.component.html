@@ -1,129 +1,250 @@
 <div class="feedback-payments-page">
-  <div class="section">
-    <div class="section-header">
-      <h2>Upcoming Bookings</h2>
-      <p>Upcoming sessions you already paid for and can request a refund.</p>
-    </div>
 
-    <div class="booking-grid" *ngIf="upcomingBookings.length; else noUpcoming">
-      <article class="booking-card" *ngFor="let booking of upcomingBookings" [ngClass]="{ pending: booking.status === 'Pending Refund' }">
-        <div class="booking-info">
-          <div class="branch-title">{{ booking.branchName }} Branch</div>
-          <div class="service-subtitle">{{ booking.service }}</div>
-          <div class="datetime">
-            {{ booking.datetime | date: 'fullDate' }} · {{ booking.datetime | date: 'shortTime' }}
-          </div>
-          <div class="amount">Amount paid: <span>{{ booking.amount | currency }}</span></div>
-          <div class="status">Status: <strong>{{ booking.status }}</strong></div>
-        </div>
-        <div class="booking-actions">
-          <button
-            *ngIf="booking.status === 'Upcoming'"
-            type="button"
-            class="btn outline"
-            (click)="openRefundModal(booking)">
-            Refund
-          </button>
-          <button
-            *ngIf="booking.status === 'Pending Refund'"
-            type="button"
-            class="btn warning"
-            (click)="cancelRefundRequest(booking)">
-            Cancel Refund Request
-          </button>
-        </div>
-      </article>
-    </div>
-
-    <ng-template #noUpcoming>
-      <p class="empty-state">You have no upcoming bookings right now.</p>
-    </ng-template>
+  <!-- Loading Spinner -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading your orders...</p>
   </div>
 
-  <div class="section">
-    <div class="section-header">
-      <h2>Completed Sessions</h2>
-      <p>Share feedback for sessions you already enjoyed.</p>
-    </div>
-
-    <div class="booking-grid" *ngIf="completedBookings.length; else noCompleted">
-      <article class="booking-card" *ngFor="let booking of completedBookings">
-        <div class="booking-info">
-          <div class="branch-title">{{ booking.branchName }} Branch</div>
-          <div class="service-subtitle">{{ booking.service }}</div>
-          <div class="datetime">
-            {{ booking.datetime | date: 'fullDate' }} · {{ booking.datetime | date: 'shortTime' }}
-          </div>
-          <div class="amount">Amount: <span>{{ booking.amount | currency }}</span></div>
-          <div class="status">Status: <strong>{{ booking.status }}</strong></div>
-        </div>
-        <div class="booking-actions">
-          <button type="button" class="btn primary" (click)="openRatingModal(booking)">{{ getRatingButtonLabel(booking) }}</button>
-        </div>
-      </article>
-    </div>
-
-    <ng-template #noCompleted>
-      <p class="empty-state">You haven’t completed any sessions yet.</p>
-    </ng-template>
+  <!-- Error Message -->
+  <div class="error-container" *ngIf="errorMessage && !isLoading">
+    <i class="fas fa-exclamation-circle"></i>
+    <p>{{ errorMessage }}</p>
+    <button class="btn primary" (click)="refreshOrders()">Try Again</button>
   </div>
 
+  <!-- MY ORDERS - قسم واحد فقط -->
+  <div class="section" *ngIf="!isLoading && !errorMessage">
+
+    <!-- Header -->
+    <div class="section-header">
+      <div class="header-content">
+        <h2><i class="fas fa-history"></i> My Orders</h2>
+        <p>View and manage all your bookings</p>
+      </div>
+      <button class="btn-refresh" (click)="refreshOrders()" [disabled]="isLoading" title="Refresh orders">
+        <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+      </button>
+    </div>
+
+    <!-- Orders List -->
+    <div class="orders-list" *ngIf="allOrdersSorted.length > 0; else noOrders">
+
+      <!-- Loop على كل الأوردرات -->
+      <article class="order-card" *ngFor="let order of allOrdersSorted; trackBy: trackByOrderId"
+        [ngClass]="{
+          'status-pending': isUpcoming(getDynamicStatus(order)),
+          'status-completed': isCompleted(getDynamicStatus(order)),
+          'status-cancelled': getDynamicStatus(order) === 'cancelled',
+          'status-refund': getDynamicStatus(order) === 'Pending Refund'
+        }">
+
+        <!-- Order Header -->
+        <div class="order-header">
+          <div class="order-status-badge" [ngClass]="getStatusClass(getDynamicStatus(order))">
+            <i [class]="getStatusIcon(getDynamicStatus(order))"></i>
+            <span>{{ getStatusLabel(getDynamicStatus(order)) }}</span>
+          </div>
+          <div class="order-date">
+            <i class="far fa-calendar"></i> {{ order.datetime | date: 'MMM d, y' }}
+          </div>
+        </div>
+
+        <!-- Order Body -->
+        <div class="order-body">
+
+          <!-- 1. Branch Name -->
+          <div class="info-row">
+            <i class="fas fa-map-marker-alt"></i>
+            <div class="info-content">
+              <span class="info-label">Branch</span>
+              <span class="info-value">{{ order.branchName }}</span>
+            </div>
+          </div>
+
+          <!-- 2. Service Name -->
+          <div class="info-row">
+            <i class="fas fa-spa"></i>
+            <div class="info-content">
+              <span class="info-label">Service</span>
+              <span class="info-value">{{ order.service }}</span>
+            </div>
+          </div>
+
+          <!-- 3. Booking Time (Actual Appointment) - from date field -->
+          <div class="info-row" *ngIf="order.date">
+            <i class="fas fa-calendar-alt"></i>
+            <div class="info-content">
+              <span class="info-label">Booking Time</span>
+              <span class="info-value">{{ formatScheduledDateTime(order.date) }}</span>
+              <!-- Debug: {{ order.date }} -->
+            </div>
+          </div>
+
+          <!-- 4. Order Creation Time - from createdAt field (datetime property) -->
+          <div class="info-row">
+            <i class="far fa-clock"></i>
+            <div class="info-content">
+              <span class="info-label">Order Created</span>
+              <span class="info-value">{{ formatOrderCreationTime(order.datetime) }}</span>
+              <!-- Debug: {{ order.datetime }} -->
+            </div>
+          </div>
+
+          <!-- 5. Amount Paid -->
+          <div class="info-row amount-row">
+            <i class="fas fa-money-bill-wave"></i>
+            <div class="info-content">
+              <span class="info-label">Amount Paid</span>
+              <span class="info-value price">{{ order.amount }} EGP</span>
+            </div>
+          </div>
+
+          <!-- 6. Payment Status -->
+          <div class="info-row">
+            <i class="fas fa-credit-card"></i>
+            <div class="info-content">
+              <span class="info-label">Payment Status</span>
+              <span class="info-value" [ngClass]="order.paymentStatus === 'paid' ? 'text-success' : 'text-warning'">
+                {{ order.paymentStatus | titlecase }}
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Actions (الأزرار) -->
+        <div class="order-actions">
+
+          <!-- Rate Button - for all bookings (shows message for future bookings) -->
+          <button type="button" class="btn btn-rate" (click)="openRatingModal(order)">
+            <i class="fas fa-star"></i> {{ getRatingButtonLabel(order) }}
+          </button>
+
+          <!-- Refund Button - للـ Upcoming/Pending فقط (future bookings) -->
+          <button *ngIf="isUpcoming(getDynamicStatus(order))" type="button" class="btn btn-refund" (click)="openRefundModal(order)">
+            <i class="fas fa-undo"></i> Request Refund
+          </button>
+
+          <!-- Cancel Refund Button -->
+          <button *ngIf="getDynamicStatus(order) === 'Pending Refund'" type="button" class="btn btn-cancel-refund"
+            (click)="cancelRefundRequest(order)">
+            <i class="fas fa-times"></i> Cancel Refund
+          </button>
+
+        </div>
+
+
+      </article>
+
+    </div>
+
+    <!-- Empty State -->
+    <ng-template #noOrders>
+      <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <h3>No Orders Yet</h3>
+        <p>You haven't made any bookings yet. Start exploring our services!</p>
+        <button class="btn primary" routerLink="/book-now">
+          <i class="fas fa-plus"></i> Book Now
+        </button>
+      </div>
+    </ng-template>
+
+  </div>
+
+  <!-- Rating Modal -->
   <div class="modal-overlay" *ngIf="isRatingModalOpen">
     <div class="modal">
       <header>
-        <h3>Rate {{ selectedRatingBooking?.service }}</h3>
+        <h3><i class="fas fa-star"></i> Rate {{ selectedRatingBooking?.service }}</h3>
         <button type="button" class="modal-close" aria-label="Close" (click)="closeRatingModal()">×</button>
       </header>
+
+      <!-- Feedback Done Badge -->
+      <div class="feedback-done-badge" *ngIf="feedbackSubmitted">
+        <i class="fas fa-check-circle"></i>
+        <span>Feedback Done ✓</span>
+      </div>
+
       <section class="rating-grid">
         <div class="rating-row" *ngFor="let metric of ratingMetrics">
           <label>{{ ratingLabels[metric] }}</label>
           <div class="star-row">
-            <button
-              type="button"
-              *ngFor="let star of [1, 2, 3, 4, 5]"
+            <button type="button" *ngFor="let star of [1, 2, 3, 4, 5]"
               (click)="setRatingValue(metric, star)"
               [class.filled]="getRatingValue(metric) >= star"
-            >
-              ★
-            </button>
+              [disabled]="feedbackSubmitted"
+              class="star-btn"> ★ </button>
           </div>
         </div>
       </section>
+
       <section>
         <label for="comment">Leave a comment (optional)</label>
-        <textarea id="comment" rows="4" [(ngModel)]="ratingComment" placeholder="Share what you loved or what we could improve"></textarea>
+        <textarea id="comment" rows="4" [(ngModel)]="ratingComment"
+          [disabled]="feedbackSubmitted"
+          [readonly]="feedbackSubmitted"
+          placeholder="Share what you loved or what we could improve"></textarea>
       </section>
+
       <footer>
-        <button type="button" class="btn primary" (click)="submitRating()">Submit</button>
-        <button type="button" class="btn outline" (click)="closeRatingModal()">Close</button>
+        <button type="button" class="btn primary" (click)="submitRating()" [disabled]="feedbackSubmitted">
+          <i class="fas fa-check"></i> {{ feedbackSubmitted ? 'Feedback Submitted' : 'Submit' }}
+        </button>
+        <button type="button" class="btn outline" (click)="closeRatingModal()">
+          <i class="fas fa-times"></i> Close
+        </button>
       </footer>
     </div>
   </div>
 
+  <!-- Refund Modal -->
   <div class="modal-overlay" *ngIf="isRefundModalOpen">
     <div class="modal">
       <header>
-        <h3>Refund Request</h3>
+        <h3><i class="fas fa-undo"></i> Refund Request</h3>
         <button type="button" class="modal-close" aria-label="Close" (click)="closeRefundModal()">×</button>
       </header>
+
       <section>
         <p class="refund-detail">Service: <strong>{{ selectedRefundBooking?.service }}</strong></p>
         <p class="refund-detail">Branch: <strong>{{ selectedRefundBooking?.branchName }}</strong></p>
-        <p class="refund-detail">Amount: <strong>{{ selectedRefundBooking?.amount | currency }}</strong></p>
+        <p class="refund-detail">Amount: <strong>{{ selectedRefundBooking?.amount }} EGP</strong></p>
       </section>
+
       <section>
         <label for="refund-reason">Reason for refund</label>
-        <textarea
-          id="refund-reason"
-          rows="4"
-          [(ngModel)]="refundReason"
-          placeholder="Tell us why you are requesting a refund"
-        ></textarea>
+        <textarea id="refund-reason" rows="4" [(ngModel)]="refundReason"
+          placeholder="Tell us why you are requesting a refund"></textarea>
       </section>
+
       <footer>
-        <button type="button" class="btn primary" (click)="confirmRefund()">Confirm Refund</button>
-        <button type="button" class="btn outline" (click)="closeRefundModal()">Cancel</button>
+        <button type="button" class="btn primary" (click)="confirmRefund()">
+          <i class="fas fa-check"></i> Confirm Refund
+        </button>
+        <button type="button" class="btn outline" (click)="closeRefundModal()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
       </footer>
+
     </div>
   </div>
+
+  <!-- Success Popup -->
+  <div class="success-popup-overlay" *ngIf="isSuccessPopupOpen">
+    <div class="success-popup">
+      <div class="success-icon">
+        <i class="fas fa-check"></i>
+      </div>
+      <h3>Feedback Submitted!</h3>
+      <p>Your feedback helps us improve every visit. Thank you for sharing your experience.</p>
+      <button type="button" class="btn-close-popup" (click)="closeSuccessPopup()">
+        Great!
+      </button>
+
+      <div class="confetti" *ngFor="let style of successConfettiStyles" [ngStyle]="style"></div>
+    </div>
+  </div>
+
 </div>

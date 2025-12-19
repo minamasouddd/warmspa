@@ -24,12 +24,14 @@ export interface Product {
   price: number;
   duration?: number;
   description?: string;
+  branch?: any[];
 }
 
 export interface ApiResponse<T> {
   status: string;
   data: T;
   message?: string;
+  results?: number;
 }
 
 @Injectable({
@@ -40,44 +42,95 @@ export class BookingService {
 
   constructor(private http: HttpClient) {}
 
-  private getHeaders(isOrder: boolean = false): HttpHeaders {
+  private getHeaders(): HttpHeaders {
     const token = localStorage.getItem('token') || '';
     return new HttpHeaders({
-      Authorization: `${isOrder ? 'User ' : 'Bearer '}${token}`,
+      'Authorization': `User ${token}`,
       'Content-Type': 'application/json',
-      Accept: 'application/json'
+      'Accept': 'application/json'
     });
   }
 
+  /**
+   * Get All Branches
+   */
   getAllBranches(): Observable<ApiResponse<{ branches: Branch[] }>> {
     return this.http.get<ApiResponse<{ branches: Branch[] }>>(
-      `${this.apiBaseUrl}/branches`,
+      `${this.apiBaseUrl}/branches?page=1&limit=100`,
       { headers: this.getHeaders() }
     );
   }
 
-  getProductById(productId: string) {
-    return this.http.get<{ status: string; data: { product: Product } }>(
-      `${this.apiBaseUrl}/products/${productId}`,
+  /**
+   * Get Branch by ID
+   */
+  getBranchById(branchId: string): Observable<ApiResponse<{ branch: Branch }>> {
+    return this.http.get<ApiResponse<{ branch: Branch }>>(
+      `${this.apiBaseUrl}/branches/get-branch-by-id/${branchId}`,
       { headers: this.getHeaders() }
     );
   }
 
-  createPaymentIntent(branchId: string, productId: string, selectedDay?: string, selectedTime?: string) {
+  /**
+   * Get All Products
+   */
+  getAllProducts(): Observable<ApiResponse<{ products: Product[] }>> {
+    return this.http.get<ApiResponse<{ products: Product[] }>>(
+      `${this.apiBaseUrl}/products/get-all-products`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * Get Product by ID
+   */
+  getProductById(productId: string): Observable<ApiResponse<{ product: Product }>> {
+    return this.http.get<ApiResponse<{ product: Product }>>(
+      `${this.apiBaseUrl}/products/get-product/${productId}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * Get Products by Branch ID
+   */
+  getProductsByBranch(branchId: string): Observable<ApiResponse<{ products: Product[] }>> {
+    return this.http.get<ApiResponse<{ products: Product[] }>>(
+      `${this.apiBaseUrl}/products/branch/${branchId}`,
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /**
+   * Create Payment Intent
+   */
+  createPaymentIntent(
+    branchId: string, 
+    productId: string, 
+    selectedDay?: string, 
+    selectedTime?: string,
+    serviceName?: string,
+    finalPrice?: number
+  ): Observable<any> {
     const token = localStorage.getItem('token') || '';
 
-    // إضافة اليوم والوقت في الـ body
     const requestBody: any = { 
       address: "test"
     };
 
     if (selectedDay) {
-      requestBody.bookingDay = selectedDay;
+      requestBody.date = selectedDay;
     }
 
-    if (selectedTime) {
-      requestBody.bookingTime = selectedTime;
+    if (serviceName) {
+      requestBody.name = serviceName;
     }
+
+    if (finalPrice !== undefined && finalPrice !== null) {
+      requestBody.price = finalPrice;
+    }
+
+    console.log('📤 Payment Intent Body:', requestBody);
 
     return this.http.post(
       `${this.apiBaseUrl}/orders/create-payment-intent/${branchId}/${productId}`,
@@ -87,6 +140,25 @@ export class BookingService {
           Authorization: `User ${token}`,
           'Content-Type': 'application/json',
           Accept: 'application/json'
+        })
+      }
+    );
+  }
+  
+  /**
+   * Apply Voucher
+   */
+  applyVoucher(serviceId: string, code: string): Observable<any> {
+    const token = localStorage.getItem('token') || '';
+    
+    return this.http.post(
+      `${this.apiBaseUrl}/vouchers/apply-voucher/${serviceId}`,
+      { code: code },
+      {
+        headers: new HttpHeaders({
+          'Authorization': `User ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         })
       }
     );

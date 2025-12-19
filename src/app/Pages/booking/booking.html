@@ -28,7 +28,7 @@
     </div>
   </div>
 
-  <!-- ✅ Branches -->
+  <!-- Branches -->
   <div class="section-container" *ngIf="!selectedBranch">
     <div class="section-header">
       <h2><i class="fas fa-map-marker-alt"></i> Available Branches</h2>
@@ -48,7 +48,7 @@
     </div>
   </div>
 
-  <!-- ✅ Select Service card -->
+  <!-- Select Service card -->
   <div class="section-container select-service-card" *ngIf="selectedBranch && !selectedTime">
     <div class="section-header">
       <h2><i class="fas fa-spa"></i> Select Service</h2>
@@ -153,7 +153,7 @@
     </div>
   </div>
 
-  <!-- ✅ Summary -->
+  <!-- Summary -->
   <div class="summary-container" *ngIf="selectedTime && selectedProduct && selectedBranch">
     <div class="summary-header">
       <h2><i class="fas fa-file-invoice"></i> Booking Summary</h2>
@@ -180,7 +180,9 @@
         <span class="value">{{ selectedTime }}</span>
       </div>
 
-      <!-- Points Discount Section (only for logged-in users) -->
+    
+
+      <!-- ✨ UPDATED POINTS DISCOUNT CARD ✨ -->
       <div class="points-discount-card" *ngIf="isAuthenticated">
         <div class="points-header">
           <div class="points-icon">
@@ -188,24 +190,93 @@
           </div>
           <div class="points-text">
             <h3>Use Points Discount</h3>
-            <p>You have {{ userPoints }} Points</p>
+            <p>You have {{ userPoints | number:'1.0-0' }} Points</p>
           </div>
         </div>
 
         <div class="points-body">
-          <p class="conversion-text">
-            {{ userPoints }} Points = {{ userPoints * pointsToCurrencyRate | number:'1.0-2' }} EGP Potential Discount
-          </p>
-          <p class="discount-text" *ngIf="pointsMaxDiscount > 0">
-            Applied Discount (capped by total): {{ pointsMaxDiscount | number:'1.0-2' }} EGP
-          </p>
+          <!-- Show eligibility message -->
+          <div *ngIf="userPoints < 10000" class="points-info-message">
+            <i class="fas fa-info-circle"></i>
+            <span>You need at least 10,000 points to redeem. Keep booking to earn more!</span>
+          </div>
 
-          <label class="points-toggle">
-            <input
-              type="checkbox"
-              [(ngModel)]="applyPointsDiscount" />
-            <span>Apply Points Discount</span>
-          </label>
+          <!-- Show discount calculation if eligible -->
+          <div *ngIf="userPoints >= 10000">
+            <p class="conversion-text">
+              <strong>{{ Math.floor(userPoints / 10000) * 10000 | number:'1.0-0' }} Points</strong> = 
+              <strong>{{ pointsMaxDiscount | number:'1.0-2' }} EGP</strong> Discount
+            </p>
+            
+            <div class="discount-formula">
+              <small>
+                <i class="fas fa-calculator"></i>
+                Formula: 100 EGP + ({{ Math.floor(userPoints / 10000) - 1 }} × 200 EGP) = {{ pointsMaxDiscount | number:'1.0-2' }} EGP
+              </small>
+            </div>
+
+            <p class="discount-cap-note" *ngIf="pointsMaxDiscount >= selectedProduct!.price">
+              <i class="fas fa-exclamation-triangle"></i>
+              Discount capped at service price ({{ selectedProduct!.price | number:'1.0-2' }} EGP)
+            </p>
+
+            <label class="points-toggle">
+              <input
+                type="checkbox"
+                [(ngModel)]="applyPointsDiscount" />
+              <span>Apply {{ pointsMaxDiscount | number:'1.0-2' }} EGP Discount</span>
+            </label>
+
+            <!-- Show applied discount info -->
+            <div *ngIf="applyPointsDiscount && actualDiscountApplied > 0" class="applied-discount-info">
+              <i class="fas fa-check-circle"></i>
+              <span>Discount of {{ actualDiscountApplied | number:'1.0-2' }} EGP will be applied after payment</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="voucher-section">
+        <div class="voucher-input-group">
+          <input 
+            type="text" 
+            class="voucher-input" 
+            placeholder="Enter voucher code"
+            [(ngModel)]="voucherCode"
+            [disabled]="voucherApplied"
+            (keyup.enter)="applyVoucher()">
+          <button 
+            type="button"
+            class="voucher-btn"
+            (click)="applyVoucher()"
+            *ngIf="!voucherApplied"
+            [disabled]="!voucherCode.trim()">
+            <i class="fas fa-tag"></i>
+            Apply
+          </button>
+          <button 
+            type="button"
+            class="voucher-btn remove"
+            (click)="clearVoucher()"
+            *ngIf="voucherApplied">
+            <i class="fas fa-times"></i>
+            Remove
+          </button>
+        </div>
+        <div class="voucher-message" *ngIf="voucherMessage" [class.success]="voucherApplied" [class.error]="!voucherApplied">
+          {{ voucherMessage }}
+        </div>
+      </div>
+        <!-- Pricing Breakdown -->
+      <div class="pricing-breakdown">
+        <div class="summary-item">
+          <span class="label"><i class="fas fa-tag"></i> Original Price:</span>
+          <span class="value">{{ (originalProductPrice !== null ? originalProductPrice : selectedProduct.price) | number:'1.0-2' }} EGP</span>
+        </div>
+
+        <div class="summary-item voucher-discount" *ngIf="voucherApplied">
+          <span class="label"><i class="fas fa-ticket-alt"></i> Voucher Discount:</span>
+          <span class="value discount-amount">- {{ voucherDiscount | number:'1.0-2' }} EGP</span>
         </div>
       </div>
 

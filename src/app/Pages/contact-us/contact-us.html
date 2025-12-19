@@ -1,3 +1,19 @@
+<!-- Toast Notification -->
+<div class="toast-notification" [class.show]="showToast">
+  <div class="toast-content">
+    <div class="toast-icon">
+      <i class="fas" [ngClass]="toastType === 'success' ? 'fa-check-circle' : 'fa-info-circle'"></i>
+    </div>
+    <div class="toast-message-container">
+      <p class="toast-message">{{ toastMessage }}</p>
+      <button *ngIf="toastType === 'info'" class="toast-login-btn" (click)="navigateToLogin()">
+        Go to Login
+      </button>
+    </div>
+    <button class="toast-close" (click)="closeToast()">×</button>
+  </div>
+</div>
+
 <section class="contact-hero">
   <div class="hero-overlay"></div>
   <div class="hero-content">
@@ -53,7 +69,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="contact-form">
         <h2 class="section-title">Send Us a <span class="gold-text">Message</span></h2>
         <form (ngSubmit)="onSubmit()" #contactForm="ngForm">
@@ -67,7 +83,15 @@
           </div>
           <div class="form-group">
             <label for="phone">Phone Number</label>
-            <input type="tel" id="phone" name="phone" [(ngModel)]="formData.phone">
+            <div class="phone-input-group">
+              <select class="country-code-select" [(ngModel)]="formData.countryCode" name="countryCode">
+                <option *ngFor="let country of countries" [value]="country.code">
+                  {{ country.flag }} {{ country.code }}
+                </option>
+              </select>
+              <input type="tel" id="phone" name="phone" [(ngModel)]="formData.phone" (input)="onPhoneInput($event)"
+                placeholder="1234567890" class="phone-input">
+            </div>
           </div>
           <div class="form-group">
             <label for="subject">Subject</label>

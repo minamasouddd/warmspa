@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { ServicesService } from '../../services/services.service';
 
 export interface SpaService {
@@ -15,17 +17,22 @@ export interface SpaService {
   templateUrl: './service.html',
   styleUrls: ['./service.css']
 })
-export class ServicesComponent implements OnInit {
+export class ServicesComponent implements OnInit, OnDestroy {
   title = 'WARMSPA';
   subtitle = 'Discover our premium spa services designed to rejuvenate your body, mind, and spirit';
   services: SpaService[] = [];
   loading = true;
-  activeTab: 'single' | 'packages' = 'single';
+  activeTab: 'single' | 'packages' | 'gym' = 'single';
 
-  constructor(private servicesService: ServicesService) {}
+  private serviceSubscription?: Subscription;
+
+  constructor(
+    private servicesService: ServicesService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-    this.servicesService.getAllServices().subscribe({
+    this.serviceSubscription = this.servicesService.getAllServices().subscribe({
       next: (response) => {
         this.services = response?.data?.products?.map((p: any) => ({
           id: p.id,
@@ -41,8 +48,18 @@ export class ServicesComponent implements OnInit {
     });
   }
 
-  setTab(tab: 'single' | 'packages'): void {
-    this.activeTab = tab;
+  ngOnDestroy(): void {
+    if (this.serviceSubscription) {
+      this.serviceSubscription.unsubscribe();
+    }
+  }
+
+  setTab(tab: 'single' | 'packages' | 'gym'): void {
+    if (tab === 'gym') {
+      this.router.navigate(['/gym']);
+    } else {
+      this.activeTab = tab;
+    }
   }
 
   trackByServiceId(index: number, service: SpaService): string {

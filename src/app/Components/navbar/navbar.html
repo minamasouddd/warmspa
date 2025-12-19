@@ -64,7 +64,7 @@
       <li class="nav-item">
         <a routerLink="/book" class="nav-link book-now-link" (click)="scrollToTop(); closeMobileMenu()">BOOK NOW</a>
       </li>
-      <ng-container *ngIf="isMobileMenuOpen">
+      <ng-container *ngIf="isMobileMenuOpen && !isAuthenticated">
         <li class="nav-item">
           <a routerLink="/login"
              class="nav-btn login-btn"
@@ -81,7 +81,9 @@
             <span class="btn-text">SIGN UP</span>
           </a>
         </li>
-        <li class="nav-item" *ngIf="isAuthenticated">
+      </ng-container>
+      <ng-container *ngIf="isMobileMenuOpen && isAuthenticated">
+        <li class="nav-item">
           <a href="#" 
              class="nav-btn logout-btn"
              (click)="$event.preventDefault(); logout()"

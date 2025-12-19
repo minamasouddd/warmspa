@@ -18,7 +18,7 @@ export interface Product {
   providedIn: 'root'
 })
 export class ServicesService {
-  private apiUrl = 'https://warm-spa.vercel.app/api/v1/products';
+  private apiUrl = 'https://warm-spa.vercel.app/api/v1/products/get-all-products';
 
   constructor(private http: HttpClient) {}
 

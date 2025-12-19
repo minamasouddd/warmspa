@@ -1,7 +1,12 @@
 <section id="home" class="hero-section">
   <div class="home-points-badge" aria-label="User points" *ngIf="isAuthenticated">
     <span class="home-points-icon" aria-hidden="true">⭐</span>
-    <span class="home-points-text">Points: 120</span>
+    <span class="home-points-text" *ngIf="!isLoadingPoints">
+      Points: {{ userPoints }}
+    </span>
+    <span class="home-points-text" *ngIf="isLoadingPoints">
+      Loading...
+    </span>
   </div>
   <div class="hero-container">
     <div class="hero-content">

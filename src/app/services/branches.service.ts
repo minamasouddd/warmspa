@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class BranchesService {
 
-  private apiUrl = 'https://warm-spa.vercel.app/api/v1/branches/city';
+  private apiUrl = 'https://warm-spa.vercel.app/api/v1/branches';
 
   private headers = new HttpHeaders({
     'Content-Type': 'application/json',

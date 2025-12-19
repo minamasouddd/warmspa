@@ -42,12 +42,43 @@
             <div class="branch-details">
               <div class="address-wrapper">
                 <i class="fas fa-map-marker-alt address-icon"></i>
-                <p class="branch-address">{{ branch.address }}</p>
+                <p class="branch-address">{{ branch.fullAddress }}</p>
               </div>
               <a href="tel:{{ branch.phone }}" class="branch-phone">
                 <i class="fas fa-phone phone-icon"></i>
                 <span class="phone-text">{{ branch.phone }}</span>
               </a>
+              <div class="compact-section">
+                <a href="mailto:{{ branch.email }}" class="branch-email-compact">
+                  <i class="fas fa-envelope email-icon"></i>
+                  <span class="email-text">{{ branch.email }}</span>
+                </a>
+                <span class="spa-rooms-compact">
+                  <i class="fas fa-door-open"></i>
+                  {{ branch.spaRooms }} Rooms
+                </span>
+              </div>
+              <div class="working-hours-compact">
+                <p class="hours-title-compact"><i class="fas fa-clock"></i> Hours</p>
+                <div class="hours-dropdown-wrapper">
+                  <select class="hours-dropdown" 
+                          #daySelect
+                          [value]="branch.selectedDay || 'monday'" 
+                          (change)="onDayChange(branch, daySelect.value)">
+                    <option *ngFor="let day of days" [value]="day">
+                      {{ day | titlecase }}
+                    </option>
+                  </select>
+                  <div class="hours-display" [class.closed]="branch.workingHours[branch.selectedDay || 'monday'] === 'Closed'">
+                    <span *ngIf="branch.workingHours[branch.selectedDay || 'monday'] !== 'Closed'" class="hours-text">
+                      Opens from {{ branch.workingHours[branch.selectedDay || 'monday'] }}
+                    </span>
+                    <span *ngIf="branch.workingHours[branch.selectedDay || 'monday'] === 'Closed'" class="hours-text closed-text">
+                      Closed
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div class="card-shine"></div>

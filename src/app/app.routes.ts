@@ -8,8 +8,8 @@ export const routes: Routes = [
   { path: 'home', loadComponent: () => import('./Pages/homepage/homepage').then(m => m.HomepageComponent) },
   { path: 'branches', loadComponent: () => import('./Pages/branches/branches').then(m => m.BranchesComponent) },
   { path: 'services', loadComponent: () => import('./Pages/service/service').then(m => m.ServicesComponent) },
+  { path: 'gym', loadComponent: () => import('./Pages/gym/gym').then(m => m.GymComponent) },
   { path: 'contact-us', loadComponent: () => import('./Pages/contact-us/contact-us').then(m => m.ContactUsComponent) },
-  { path: '', redirectTo: '/home', pathMatch: 'full' },
 
   // Protected
   { 
@@ -34,4 +34,3 @@ export const routes: Routes = [
 
   { path: '**', redirectTo: 'home' }
 ];
-

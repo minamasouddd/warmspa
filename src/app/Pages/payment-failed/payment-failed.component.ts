@@ -1,33 +1,31 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-payment-failed',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule],
   templateUrl: './payment-failed.component.html',
   styleUrls: ['./payment-failed.component.css']
 })
-export class PaymentFailedComponent {
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
-  
-  // Icons
-  errorIcon = 'error';
-  
-  // Error details
-  errorMessage: string = 'Payment could not be processed';
+export class PaymentFailedComponent implements OnInit {
+  errorIcon: string = 'error';
+  errorMessage: string = 'Payment failed. Please try again.';
 
-  constructor() {
-    this.route.queryParams.subscribe(params => {
-      if (params['error']) {
-        this.errorMessage = decodeURIComponent(params['error'].replace(/\+/g, ' '));
-      }
-    });
+  constructor(private router: Router) {}
+
+  ngOnInit() {}
+
+  retryPayment() {
+    this.router.navigate(['/book']);
   }
 
   goToHome() {
-    this.router.navigate(['/']);
+    this.navigateToHome();
+  }
+
+  navigateToHome() {
+    this.router.navigate(['/home']);
   }
 }

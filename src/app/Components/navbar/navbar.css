@@ -500,7 +500,7 @@
     left: -100%;
     top: 80px;
     flex-direction: column;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(235, 43, 29, 0.98) 20%, rgba(44, 74, 107, 0.98) 50%, rgba(30, 58, 95, 0.98) 100%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) ,#45C4C2 50%, rgba(44, 74, 107, 0.98) 55%, rgba(30, 58, 95, 0.98) 100%);
     backdrop-filter: blur(15px);
     width: 100%;
     text-align: center;
