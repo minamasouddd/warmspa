@@ -132,7 +132,7 @@ export class OrdersService {
   redeemPoints(orderId: string, pointsToRedeem: number): Observable<RedeemPointsResponse> {
     const token = localStorage.getItem('token') || '';
     const headers = new HttpHeaders({
-      'Authorization': `User ${token}`,
+      'Authorization': `Admin ${token}`,
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     });

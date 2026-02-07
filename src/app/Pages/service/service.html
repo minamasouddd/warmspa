@@ -19,28 +19,14 @@
 
     <!-- Toggle Section -->
     <div class="services-toggle">
-      <button
-        type="button"
-        class="toggle-button"
-        [class.active]="activeTab === 'single'"
-        (click)="setTab('single')"
-      >
+      <button type="button" class="toggle-button" [class.active]="activeTab === 'single'" (click)="setTab('single')">
         Services
       </button>
-      <button
-        type="button"
-        class="toggle-button"
-        [class.active]="activeTab === 'packages'"
-        (click)="setTab('packages')"
-      >
+      <button type="button" class="toggle-button" [class.active]="activeTab === 'packages'"
+        (click)="setTab('packages')">
         course
       </button>
-      <button
-        type="button"
-        class="toggle-button"
-        [class.active]="activeTab === 'gym'"
-        (click)="setTab('gym')"
-      >
+      <button type="button" class="toggle-button" [class.active]="activeTab === 'gym'" (click)="setTab('gym')">
         Gym
       </button>
     </div>
@@ -51,17 +37,13 @@
         <div class="spinner"></div>
       </div>
       <div class="services-grid">
-        <div 
-          class="service-card" 
-          *ngFor="let service of services; trackBy: trackByServiceId"
-          (click)="onServiceCardClick(service)"
-          (mouseenter)="onServiceCardHover(service)"
-          [attr.data-service-id]="service.id"
-        >
+        <div class="service-card" *ngFor="let service of services; trackBy: trackByServiceId"
+          (click)="onServiceCardClick(service)" (mouseenter)="onServiceCardHover(service)"
+          [attr.data-service-id]="service.id">
           <div class="service-card-content">
             <!-- Service Icon -->
             <div class="service-icon">
-             <i class="fa-solid fa-spa" aria-hidden="true"></i>
+              <i class="fa-solid fa-spa" aria-hidden="true"></i>
             </div>
 
             <!-- Service Title -->

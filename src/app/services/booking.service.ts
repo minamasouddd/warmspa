@@ -102,49 +102,69 @@ export class BookingService {
   }
 
   /**
-   * Create Payment Intent
+   * Initiate Paymob Payment
    */
   createPaymentIntent(
     branchId: string, 
     productId: string, 
     selectedDay?: string, 
     selectedTime?: string,
-    serviceName?: string,
+    customerName?: string,
     finalPrice?: number
   ): Observable<any> {
     const token = localStorage.getItem('token') || '';
-
-    const requestBody: any = { 
-      address: "test"
-    };
+    const requestBody: any = {};
 
     if (selectedDay) {
       requestBody.date = selectedDay;
     }
 
-    if (serviceName) {
-      requestBody.name = serviceName;
+    if (customerName) {
+      requestBody.name = customerName;
     }
 
     if (finalPrice !== undefined && finalPrice !== null) {
       requestBody.price = finalPrice;
     }
 
-    console.log('📤 Payment Intent Body:', requestBody);
+    console.log('📤 Paymob Initiate Body:', requestBody);
+
+    const headers = new HttpHeaders({
+      Authorization: `User ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
 
     return this.http.post(
-      `${this.apiBaseUrl}/orders/create-payment-intent/${branchId}/${productId}`,
+      `${this.apiBaseUrl}/orders/paymob/initiate/${branchId}/${productId}`,
       requestBody,
       {
-        headers: new HttpHeaders({
-          Authorization: `User ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json'
-        })
+        headers
       }
     );
   }
-  
+
+  /**
+   * Initiate Paymob Payment for Courses
+   */
+  createCoursePaymentIntent(payload: {
+    service: Array<{
+      serviceName: string;
+      serviceId: string;
+      servicePrice: number;
+      noOfSessions: number;
+    }>;
+    branchId: string;
+    userName: string;
+    phone: string;
+  }): Observable<any> {
+    return this.http.post(
+      `${this.apiBaseUrl}/courses/payment/initiate`,
+      payload,
+      { headers: this.getHeaders() }
+    );
+  }
+
   /**
    * Apply Voucher
    */

@@ -68,15 +68,20 @@
             <div class="info-content">
               <span class="info-label">Service</span>
               <span class="info-value">{{ order.service }}</span>
+              <div class="info-sublist" *ngIf="order.services?.length">
+                <div class="info-subitem" *ngFor="let service of order.services">
+                  {{ service.name }} × {{ service.quantity }}
+                </div>
+              </div>
             </div>
           </div>
 
           <!-- 3. Booking Time (Actual Appointment) - from date field -->
-          <div class="info-row" *ngIf="order.date">
+          <div class="info-row" *ngIf="order.date || order.bookingDate || order.bookingTime">
             <i class="fas fa-calendar-alt"></i>
             <div class="info-content">
               <span class="info-label">Booking Time</span>
-              <span class="info-value">{{ formatScheduledDateTime(order.date) }}</span>
+              <span class="info-value">{{ formatAppointmentTime(order) }}</span>
               <!-- Debug: {{ order.date }} -->
             </div>
           </div>

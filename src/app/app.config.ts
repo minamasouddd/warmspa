@@ -21,11 +21,19 @@ function initAuthState(): () => void {
 
 // interceptor function
 const authInterceptor = (req: any, next: any) => {
+  // Respect explicit Authorization headers set by services (e.g., Paymob uses User auth)
+  if (req.headers?.has('Authorization')) {
+    return next(req);
+  }
+
   // Get token from localStorage
   const token = localStorage.getItem('token');
 
   if (token) {
-    console.log('🔑 Token found in localStorage');
+    console.log(' Token found in localStorage');
+    console.log(' Token length:', token.length);
+    console.log(' Token value:', token);
+    console.log(' Is valid JWT?', token.split('.').length === 3 ? 'Yes' : 'No');
     console.log('📏 Token length:', token.length);
     console.log('🔍 Token value:', token);
     console.log('✅ Is valid JWT?', token.split('.').length === 3 ? 'Yes' : 'No');

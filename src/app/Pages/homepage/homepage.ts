@@ -4,11 +4,12 @@ import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { UserService } from '../../services/user.service';
+import { TestimonialsComponent } from '../../Components/testimonials/testimonials.component';
 
 @Component({
   selector: 'app-homepage',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TestimonialsComponent],
   templateUrl: './homepage.html',
   styleUrls: ['./homepage.css']
 })

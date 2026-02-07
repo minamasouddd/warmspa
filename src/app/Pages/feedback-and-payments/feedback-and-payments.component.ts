@@ -6,11 +6,13 @@ import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { filter, distinctUntilChanged } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { OrdersService, Order, OrdersResponse } from '../../services/orders.service';
+import { BookingService, Product } from '../../services/booking.service';
 import { FeedbackService, CreateFeedbackRequest, UpdateFeedbackRequest } from '../../services/feedback.service';
 
 interface Booking {
   id: string;
   service: string;
+  services?: Array<{ id: string; name: string; quantity: number }>;
   datetime: string;
   amount: number;
   status: 'Upcoming' | 'Completed' | 'Pending Refund' | 'pending' | 'completed' | 'cancelled';
@@ -78,16 +80,19 @@ export class FeedbackAndPaymentsComponent implements OnInit, OnDestroy, AfterVie
 
   private routerSubscription?: Subscription;
   private isFirstLoad = true;
+  private serviceNameById: Record<string, string> = {};
 
   constructor(
     private ordersService: OrdersService,
     private feedbackService: FeedbackService,
+    private bookingService: BookingService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
     console.log('🔵 ngOnInit called');
+    this.loadServicesCatalog();
     this.loadUserOrders();
 
     this.routerSubscription = this.router.events
@@ -174,10 +179,43 @@ export class FeedbackAndPaymentsComponent implements OnInit, OnDestroy, AfterVie
     this.loadUserOrders();
   }
 
+  private loadServicesCatalog(): void {
+    this.bookingService.getAllProducts().subscribe({
+      next: (res) => {
+        const products = Array.isArray(res?.data?.products) ? res.data.products : [];
+        this.serviceNameById = products.reduce((acc: Record<string, string>, product: Product) => {
+          acc[product._id] = product.name;
+          return acc;
+        }, {});
+      },
+      error: (error: any) => {
+        console.warn('⚠️ Failed to load services catalog:', error);
+      }
+    });
+  }
+
   private transformOrdersToBookings(orders: Order[]): Booking[] {
     return orders.map((order, idx) => {
       const firstItem = order.items[0];
-      const serviceName = firstItem?.service?.name || 'Unknown Service';
+      const services = Array.isArray(order.items)
+        ? order.items.map((item: any) => {
+          const serviceId = item?.service?._id || item?.service?.id || item?.serviceId || item?.service || '';
+          const name =
+            item?.service?.name ||
+            this.serviceNameById[serviceId] ||
+            item?.serviceName ||
+            'Unknown Service';
+          const quantity = item?.quantity || item?.qty || 1;
+          return {
+            id: serviceId,
+            name,
+            quantity
+          };
+        })
+        : [];
+      const serviceName = services.length
+        ? services.map((service) => service.name).join(', ')
+        : 'Unknown Service';
 
       const feedbackKey = `feedback_${order._id}`;
       const savedFeedback = localStorage.getItem(feedbackKey);
@@ -199,6 +237,8 @@ export class FeedbackAndPaymentsComponent implements OnInit, OnDestroy, AfterVie
         orderId: order._id,
         branchId: order.branch?._id || '',
         service: serviceName,
+        services,
+
         datetime: order.createdAt,
         amount: order.totalAmount,
         branchName: order.branch?.name || 'Unknown Branch',
@@ -344,6 +384,28 @@ export class FeedbackAndPaymentsComponent implements OnInit, OnDestroy, AfterVie
         return 'Refund Pending';
       default:
         return status;
+    }
+  }
+
+  formatAppointmentTime(booking: Booking): string {
+    if (!booking) return '';
+    if (!booking.date) {
+      return '';
+    }
+
+    try {
+      const date = new Date(booking.date);
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      let hours = date.getUTCHours();
+      const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+      const period = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      return `${year}-${month}-${day} ${hours}:${minutes} ${period}`;
+    } catch (error) {
+      console.error('❌ Error formatting appointment time:', error);
+      return booking.date;
     }
   }
 

@@ -29,7 +29,7 @@ export class ServicesComponent implements OnInit, OnDestroy {
   constructor(
     private servicesService: ServicesService,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.serviceSubscription = this.servicesService.getAllServices().subscribe({

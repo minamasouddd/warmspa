@@ -12,12 +12,12 @@
       <span>Select Branch</span>
     </div>
 
-    <div class="step" [class.active]="selectedBranch && !selectedProduct" [class.completed]="selectedProduct" (click)="goToStep(2)">
+    <div class="step" [class.active]="selectedBranch && !hasSelectedService" [class.completed]="hasSelectedService" (click)="goToStep(2)">
       <div class="step-number">2</div>
       <span>Choose Service</span>
     </div>
 
-    <div class="step" [class.active]="selectedProduct && !selectedTime" [class.completed]="selectedTime" (click)="goToStep(3)">
+    <div class="step" [class.active]="hasSelectedService && !selectedTime" [class.completed]="selectedTime" (click)="goToStep(3)">
       <div class="step-number">3</div>
       <span>Select Time</span>
     </div>
@@ -55,7 +55,18 @@
       <p>Choose your preferred service</p>
     </div>
 
-    <div class="card-grid">
+    <!-- Service/Course Toggle -->
+    <div class="service-type-toggle">
+      <button type="button" class="toggle-button" [class.active]="serviceMode === 'single'" (click)="setServiceMode('single')">
+        Service
+      </button>
+      <button type="button" class="toggle-button" [class.active]="serviceMode === 'course'" (click)="setServiceMode('course')">
+        Course
+      </button>
+    </div>
+
+    <!-- Single Service List -->
+    <div class="card-grid" *ngIf="serviceMode === 'single'">
       <div *ngFor="let product of products"
            class="card service-card"
            [class.selected]="!!selectedProduct && $any(selectedProduct)._id === $any(product)._id"
@@ -69,7 +80,52 @@
       </div>
     </div>
 
-    <div class="day-time-row" *ngIf="selectedProduct && !selectedTime">
+    <!-- Course (Multiple Services) List -->
+    <div class="card-grid" *ngIf="serviceMode === 'course'">
+      <div *ngFor="let product of products"
+           class="card service-card"
+           [class.selected]="(courseSelections[$any(product)._id] || 0) > 0">
+        <div class="checkmark"><i class="fas fa-check"></i></div>
+        <div class="service-details">
+          <h3>{{ product.name }}</h3>
+          <p class="price">{{ product.price }} EGP</p>
+          <p class="duration"><i class="far fa-clock"></i> {{ product.duration || 60 }} minutes</p>
+          <div class="quantity-controls">
+            <button type="button" class="qty-btn" (click)="decrementCourse(product)">-</button>
+            <span class="qty">{{ courseSelections[$any(product)._id] || 0 }}</span>
+            <button type="button" class="qty-btn" (click)="incrementCourse(product)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Course Summary Panel -->
+    <div class="course-summary-panel" *ngIf="serviceMode === 'course' && courseItems.length">
+      <h3 class="course-summary-title"><i class="fas fa-list"></i> Selected Services</h3>
+      <div class="course-summary-list">
+        <div class="course-summary-item" *ngFor="let item of courseItems">
+          <span class="name">{{ item.product.name }}</span>
+          <span class="qty">× {{ item.quantity }}</span>
+          <span class="subtotal">{{ item.subtotal | number:'1.0-2' }} EGP</span>
+        </div>
+      </div>
+      <div class="course-summary-breakdown">
+        <div class="course-summary-row">
+          <span>Subtotal</span>
+          <span>{{ courseTotal | number:'1.0-2' }} EGP</span>
+        </div>
+        <div class="course-summary-row" *ngIf="courseDiscountRate > 0">
+          <span>Discount ({{ courseDiscountRate * 100 }}%)</span>
+          <span>-{{ courseDiscountAmount | number:'1.0-2' }} EGP</span>
+        </div>
+        <div class="course-summary-total">
+          <span>Total</span>
+          <span>{{ courseFinalTotal | number:'1.0-2' }} EGP</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="day-time-row" *ngIf="hasSelectedService && !selectedTime">
       <div class="day-time-panel">
         <div class="panel-column day-control">
           <div class="panel-title">
@@ -154,7 +210,7 @@
   </div>
 
   <!-- Summary -->
-  <div class="summary-container" *ngIf="selectedTime && selectedProduct && selectedBranch">
+  <div class="summary-container" *ngIf="selectedTime && hasSelectedService && selectedBranch">
     <div class="summary-header">
       <h2><i class="fas fa-file-invoice"></i> Booking Summary</h2>
     </div>
@@ -165,9 +221,18 @@
         <span class="value">{{ selectedBranch.name }}</span>
       </div>
 
-      <div class="summary-item">
+      <div class="summary-item" *ngIf="serviceMode === 'single'">
         <span class="label"><i class="fas fa-spa"></i> Service:</span>
-        <span class="value">{{ selectedProduct.name }}</span>
+        <span class="value">{{ selectedProduct?.name }}</span>
+      </div>
+
+      <div class="summary-item" *ngIf="serviceMode === 'course'">
+        <span class="label"><i class="fas fa-spa"></i> Services:</span>
+        <div class="value course-summary-inline">
+          <div class="course-summary-inline-item" *ngFor="let item of courseItems">
+            {{ item.product.name }} × {{ item.quantity }}
+          </div>
+        </div>
       </div>
 
       <div class="summary-item">
@@ -182,61 +247,117 @@
 
     
 
-      <!-- ✨ UPDATED POINTS DISCOUNT CARD ✨ -->
-      <div class="points-discount-card" *ngIf="isAuthenticated">
+      <!-- ✨ POINTS DISCOUNT CARD - Optional Rewards ✨ -->
+      <div class="points-discount-card" *ngIf="isAuthenticated && hasSelectedService">
         <div class="points-header">
           <div class="points-icon">
-            <i class="fas fa-star"></i>
+            <i class="fas fa-gift"></i>
           </div>
           <div class="points-text">
-            <h3>Use Points Discount</h3>
-            <p>You have {{ userPoints | number:'1.0-0' }} Points</p>
+            <h3>💎 Redeem Your Points</h3>
+            <p>You have <strong>{{ userPoints | number:'1.0-0' }}</strong> points available</p>
           </div>
         </div>
 
         <div class="points-body">
-          <!-- Show eligibility message -->
-          <div *ngIf="userPoints < 10000" class="points-info-message">
-            <i class="fas fa-info-circle"></i>
-            <span>You need at least 10,000 points to redeem. Keep booking to earn more!</span>
+          <!-- Not enough points message -->
+          <div *ngIf="userPoints < 10000" class="points-info-message friendly">
+            <i class="fas fa-star"></i>
+            <span>Keep booking to earn more points! You'll need 10,000 points to unlock discounts.</span>
           </div>
 
-          <!-- Show discount calculation if eligible -->
+          <!-- Points redemption option -->
           <div *ngIf="userPoints >= 10000">
-            <p class="conversion-text">
-              <strong>{{ Math.floor(userPoints / 10000) * 10000 | number:'1.0-0' }} Points</strong> = 
-              <strong>{{ pointsMaxDiscount | number:'1.0-2' }} EGP</strong> Discount
+            <p class="points-intro">
+              <i class="fas fa-sparkles"></i>
+              Great news! You can use your points to get a discount on this booking. 
+              <strong>This is completely optional</strong> — only check the box if you'd like to redeem points.
             </p>
-            
-            <div class="discount-formula">
-              <small>
-                <i class="fas fa-calculator"></i>
-                Formula: 100 EGP + ({{ Math.floor(userPoints / 10000) - 1 }} × 200 EGP) = {{ pointsMaxDiscount | number:'1.0-2' }} EGP
-              </small>
+
+            <!-- Points Selection -->
+            <div class="points-selection-section">
+              <label class="points-label">How many points would you like to use?</label>
+              <p class="points-hint">
+                <i class="fas fa-info-circle"></i>
+                Points can be redeemed in multiples of 10,000
+              </p>
+
+              <!-- Quick Select Buttons -->
+              <div class="points-quick-select">
+                <button
+                  type="button"
+                  *ngFor="let option of pointsOptions"
+                  class="points-option-btn"
+                  [class.selected]="pointsToRedeemInput === option"
+                  [disabled]="option > userPoints"
+                  (click)="selectPointsOption(option)">
+                  {{ option | number:'1.0-0' }} pts
+                </button>
+              </div>
+
+              <!-- Points Input -->
+              <div class="points-input-group">
+                <div class="points-input-wrapper">
+                  <input
+                    type="number"
+                    class="points-input"
+                    [(ngModel)]="pointsToRedeemInput"
+                    [min]="10000"
+                    [max]="maxRedeemablePoints"
+                    step="10000"
+                    placeholder="Or enter custom amount"
+                    (change)="validatePointsInput()" />
+                  <span class="points-suffix">pts</span>
+                </div>
+                <div class="points-validation" *ngIf="pointsValidationError">
+                  <i class="fas fa-exclamation-circle"></i>
+                  {{ pointsValidationError }}
+                </div>
+              </div>
             </div>
 
-            <p class="discount-cap-note" *ngIf="pointsMaxDiscount >= selectedProduct!.price">
-              <i class="fas fa-exclamation-triangle"></i>
-              Discount capped at service price ({{ selectedProduct!.price | number:'1.0-2' }} EGP)
-            </p>
+            <!-- Discount Preview -->
+            <div class="discount-preview" *ngIf="calculatedDiscount > 0">
+              <div class="discount-preview-box">
+                <i class="fas fa-tag"></i>
+                <div class="discount-preview-text">
+                  <strong>{{ calculatedDiscount | number:'1.0-2' }} EGP off</strong>
+                  <small>with {{ pointsToRedeemInput | number:'1.0-0' }} points</small>
+                </div>
+              </div>
+            </div>
 
-            <label class="points-toggle">
+            <!-- Apply Checkbox -->
+            <label class="points-toggle friendly-toggle" *ngIf="isPointsInputValid && calculatedDiscount > 0">
               <input
                 type="checkbox"
                 [(ngModel)]="applyPointsDiscount" />
-              <span>Apply {{ pointsMaxDiscount | number:'1.0-2' }} EGP Discount</span>
+              <span class="toggle-text">
+                <strong>Yes, apply this discount!</strong>
+                <small>I'll save {{ calculatedDiscount | number:'1.0-2' }} EGP</small>
+              </span>
             </label>
 
-            <!-- Show applied discount info -->
-            <div *ngIf="applyPointsDiscount && actualDiscountApplied > 0" class="applied-discount-info">
+            <!-- Selected Info -->
+            <div *ngIf="applyPointsDiscount && calculatedDiscount > 0" class="applied-discount-info friendly-applied">
               <i class="fas fa-check-circle"></i>
-              <span>Discount of {{ actualDiscountApplied | number:'1.0-2' }} EGP will be applied after payment</span>
+              <span>
+                <strong>Discount selected!</strong> 
+                You'll save {{ calculatedDiscount | number:'1.0-2' }} EGP at checkout. 
+                You can still proceed without using points by unchecking the box above.
+              </span>
+            </div>
+
+            <!-- No thanks note -->
+            <div class="no-points-note" *ngIf="!applyPointsDiscount">
+              <i class="fas fa-smile"></i>
+              <span>No problem! Just leave this unchecked and pay the full amount. Your points will stay in your account for next time.</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="voucher-section">
+      <div class="voucher-section" *ngIf="serviceMode === 'single'">
         <div class="voucher-input-group">
           <input 
             type="text" 
@@ -268,10 +389,10 @@
         </div>
       </div>
         <!-- Pricing Breakdown -->
-      <div class="pricing-breakdown">
+      <div class="pricing-breakdown" *ngIf="serviceMode === 'single'">
         <div class="summary-item">
           <span class="label"><i class="fas fa-tag"></i> Original Price:</span>
-          <span class="value">{{ (originalProductPrice !== null ? originalProductPrice : selectedProduct.price) | number:'1.0-2' }} EGP</span>
+          <span class="value">{{ (originalProductPrice !== null ? originalProductPrice : (selectedProduct?.price || 0)) | number:'1.0-2' }} EGP</span>
         </div>
 
         <div class="summary-item voucher-discount" *ngIf="voucherApplied">
@@ -287,11 +408,51 @@
         </span>
       </div>
 
-      <button (click)="payNow()" class="pay-btn" [disabled]="isLoading">
+      <div class="terms-consent">
+        <label class="terms-checkbox">
+          <input
+            type="checkbox"
+            [(ngModel)]="termsAccepted"
+            [disabled]="isLoading" />
+          <span>
+            I agree to the
+            <button type="button" class="terms-link" (click)="openTerms($event)">Payment Terms &amp; Conditions</button>
+          </span>
+        </label>
+        <div class="terms-error" *ngIf="termsTouched && !termsAccepted">
+          Please agree to the Payment Terms &amp; Conditions to proceed.
+        </div>
+      </div>
+
+      <button (click)="payNow()" class="pay-btn" [disabled]="isLoading || !termsAccepted">
         <i *ngIf="!isLoading" class="fas fa-credit-card"></i>
         <span *ngIf="!isLoading">Confirm & Pay Now</span>
         <div *ngIf="isLoading" class="spinner"></div>
       </button>
+    </div>
+  </div>
+
+  <div class="terms-overlay" *ngIf="isTermsOpen" (click)="closeTerms()">
+    <div class="terms-sheet" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="paymentTermsTitle">
+      <div class="terms-header">
+        <h3 id="paymentTermsTitle">Payment Terms &amp; Conditions</h3>
+        <button type="button" class="terms-close" (click)="closeTerms()">Close</button>
+      </div>
+
+      <div class="terms-body">
+        <h4>No late arrival</h4>
+        <p>Please arrive on time. Late arrival may result in a shortened session without refund.</p>
+
+        <h4>Cancellation policy</h4>
+        <p>Cancellations or rescheduling should be made in advance. No-shows or late cancellations may be subject to charges.</p>
+
+        <h4>Spa rules &amp; behavior guidelines</h4>
+        <p>Please respect other guests and staff. Keep noise to a minimum, follow hygiene rules, and follow all safety instructions.</p>
+      </div>
+
+      <div class="terms-footer">
+        <button type="button" class="terms-accept" (click)="acceptTerms()">I Agree</button>
+      </div>
     </div>
   </div>
 

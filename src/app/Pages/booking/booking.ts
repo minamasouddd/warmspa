@@ -41,6 +41,10 @@ export class BookingComponent implements OnInit, OnDestroy {
   isLoading = false;
   errorMessage = '';
 
+  termsAccepted: boolean = false;
+  termsTouched: boolean = false;
+  isTermsOpen: boolean = false;
+
   currentMonth: Date = new Date();
   calendarWeeks: CalendarDay[][] = [];
   isDatePickerOpen: boolean = false;
@@ -52,11 +56,17 @@ export class BookingComponent implements OnInit, OnDestroy {
   applyPointsDiscount: boolean = false;
   userName: string | null = null;
   userEmail: string | null = null;
+  userPhone: string | null = null;
   
   // Points redemption tracking
   pointsRedeemed: number = 0;
   actualDiscountApplied: number = 0;
   remainingPointsAfterRedemption: number = 0;
+  
+  // Points input for redemption
+  pointsToRedeemInput: number = 0;
+  pointsValidationError: string = '';
+  isPointsInputValid: boolean = false;
   
   // Expose Math to template
   Math = Math;
@@ -68,6 +78,8 @@ export class BookingComponent implements OnInit, OnDestroy {
   voucherApplied: boolean = false;
   originalProductPrice: number | null = null;
   private productSubscriptions: Subscription[] = [];
+  serviceMode: 'single' | 'course' = 'single';
+  courseSelections: { [productId: string]: number } = {};
 
   constructor(
     private bookingService: BookingService,
@@ -89,6 +101,80 @@ export class BookingComponent implements OnInit, OnDestroy {
     }
   }
 
+  setServiceMode(mode: 'single' | 'course') {
+    if (this.serviceMode === mode) return;
+    this.serviceMode = mode;
+    this.selectedProduct = null;
+    this.selectedDay = null;
+    this.selectedTime = null;
+    this.availableTimeSlots = [];
+    this.isDatePickerOpen = false;
+    this.isTimeDropdownOpen = false;
+    this.errorMessage = '';
+    this.applyPointsDiscount = false;
+    this.resetPointsRedemption();
+    if (mode === 'single') {
+      this.courseSelections = {};
+    } else {
+      this.clearVoucher();
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  incrementCourse(product: Product) {
+    const id = product._id;
+    this.courseSelections[id] = (this.courseSelections[id] || 0) + 1;
+  }
+
+  decrementCourse(product: Product) {
+    const id = product._id;
+    if (this.courseSelections[id]) {
+      this.courseSelections[id] = this.courseSelections[id] - 1;
+      if (this.courseSelections[id] <= 0) {
+        delete this.courseSelections[id];
+      }
+    }
+  }
+
+  get courseItems(): { product: Product, quantity: number, subtotal: number }[] {
+    return Object.entries(this.courseSelections)
+      .map(([id, qty]) => {
+        const prod = this.products.find(p => p._id === id);
+        return prod ? { product: prod, quantity: qty, subtotal: (prod.price || 0) * qty } : null;
+      })
+      .filter((x): x is { product: Product; quantity: number; subtotal: number } => !!x);
+  }
+
+  get courseQuantity(): number {
+    return this.courseItems.reduce((sum, item) => sum + item.quantity, 0);
+  }
+
+  get courseDiscountRate(): number {
+    if (this.courseQuantity >= 10) {
+      return 0.15;
+    }
+    if (this.courseQuantity >= 5) {
+      return 0.05;
+    }
+    return 0;
+  }
+
+  get courseDiscountAmount(): number {
+    return this.courseTotal * this.courseDiscountRate;
+  }
+
+  get courseFinalTotal(): number {
+    return Math.max(0, this.courseTotal - this.courseDiscountAmount);
+  }
+
+  get hasSelectedService(): boolean {
+    return this.serviceMode === 'single' ? !!this.selectedProduct : this.courseItems.length > 0;
+  }
+
+  get courseTotal(): number {
+    return this.courseItems.reduce((sum, item) => sum + item.subtotal, 0);
+  }
+
   // ===== Load User Data from API =====
   loadUserData(): void {
     this.ordersService.getUserData().subscribe({
@@ -97,6 +183,7 @@ export class BookingComponent implements OnInit, OnDestroy {
         this.userPoints = res.userData.points || 0;
         this.userName = res.userData.name || null;
         this.userEmail = res.userData.email || null;
+        this.userPhone = res.userData.phone || null;
         
         // Update localStorage with fresh data
         localStorage.setItem('user', JSON.stringify(res.userData));
@@ -111,6 +198,7 @@ export class BookingComponent implements OnInit, OnDestroy {
             this.userPoints = parsed?.points ?? 0;
             this.userName = parsed?.name ?? null;
             this.userEmail = parsed?.email ?? null;
+            this.userPhone = parsed?.phone ?? null;
           } catch {
             this.userPoints = 0;
           }
@@ -149,6 +237,9 @@ export class BookingComponent implements OnInit, OnDestroy {
     this.buildCalendar();
     this.errorMessage = '';
     this.isLoading = true;
+    this.serviceMode = 'single';
+    this.courseSelections = {};
+    this.clearVoucher();
 
     // Reset points discount when changing branch
     this.applyPointsDiscount = false;
@@ -477,21 +568,78 @@ export class BookingComponent implements OnInit, OnDestroy {
     return Math.min(potentialDiscount, this.selectedProduct.price);
   }
 
-  get pointsMaxDiscount(): number {
-    return this.calculateMaxPointsDiscount();
+  get maxRedeemablePoints(): number {
+    return Math.floor(this.userPoints / 10000) * 10000;
+  }
+
+  get pointsOptions(): number[] {
+    const max = Math.floor(this.userPoints / 10000);
+    const options = [];
+    for (let i = 1; i <= max && i <= 5; i++) {
+      options.push(i * 10000);
+    }
+    return options;
+  }
+
+  get calculatedDiscount(): number {
+    const increments = this.pointsToRedeemInput / 10000;
+    if (increments < 1) return 0;
+    // Formula: 100 + (n - 1) × 200
+    const discount = 100 + (increments - 1) * 200;
+    return Math.round(discount);
+  }
+
+  get calculatedDiscountFormula(): string {
+    const increments = this.pointsToRedeemInput / 10000;
+    if (increments < 1) return '';
+    const base = 100;
+    const extra = (increments - 1) * 200;
+    return `${base} EGP + ${increments - 1} × 200 EGP = ${this.calculatedDiscount} EGP`;
+  }
+
+  validatePointsInput(): void {
+    this.pointsValidationError = '';
+    this.isPointsInputValid = false;
+
+    if (!this.pointsToRedeemInput || this.pointsToRedeemInput <= 0) {
+      this.pointsValidationError = 'Please enter a valid number of points';
+      return;
+    }
+
+    if (this.pointsToRedeemInput < 10000) {
+      this.pointsValidationError = 'Minimum redeemable points is 10,000';
+      return;
+    }
+
+    if (this.pointsToRedeemInput % 10000 !== 0) {
+      this.pointsValidationError = 'Points must be in increments of 10,000';
+      return;
+    }
+
+    if (this.pointsToRedeemInput > this.userPoints) {
+      this.pointsValidationError = `You only have ${this.userPoints} points available`;
+      return;
+    }
+
+    this.isPointsInputValid = true;
+  }
+
+  selectPointsOption(option: number): void {
+    this.pointsToRedeemInput = option;
+    this.validatePointsInput();
   }
 
   get finalTotal(): number {
+    if (this.serviceMode === 'course') {
+      return this.courseFinalTotal;
+    }
     if (!this.selectedProduct) {
       return 0;
     }
     let total = this.selectedProduct.price;
-    
-    // Apply points discount (using actual discount from API if available)
     if (this.applyPointsDiscount && this.actualDiscountApplied > 0) {
       total -= this.actualDiscountApplied;
     }
-    
     return Math.max(0, total);
   }
 
@@ -613,6 +761,10 @@ export class BookingComponent implements OnInit, OnDestroy {
         this.availableTimeSlots = [];
         this.errorMessage = '';
         this.resetPointsRedemption();
+        this.courseSelections = {};
+        this.serviceMode = 'single';
+        this.clearVoucher();
+        this.applyPointsDiscount = false;
         break;
       case 2:
         if (this.selectedBranch) {
@@ -621,10 +773,14 @@ export class BookingComponent implements OnInit, OnDestroy {
           this.selectedTime = null;
           this.availableTimeSlots = [];
           this.resetPointsRedemption();
+          this.courseSelections = {};
+          this.serviceMode = 'single';
+          this.clearVoucher();
+          this.applyPointsDiscount = false;
         }
         break;
       case 3:
-        if (this.selectedBranch && this.selectedProduct) {
+        if (this.selectedBranch && this.hasSelectedService) {
           this.selectedDay = null;
           this.selectedTime = null;
         }
@@ -633,9 +789,39 @@ export class BookingComponent implements OnInit, OnDestroy {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  openTerms(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.isTermsOpen = true;
+  }
+
+  closeTerms(): void {
+    this.isTermsOpen = false;
+  }
+
+  acceptTerms(): void {
+    this.termsAccepted = true;
+    this.termsTouched = true;
+    this.isTermsOpen = false;
+  }
+
   payNow() {
-    if (!this.selectedBranch || !this.selectedProduct) {
-      return alert('Please select a branch and a service');
+    this.termsTouched = true;
+    if (!this.termsAccepted) {
+      this.openTerms();
+      return;
+    }
+
+    if (!this.selectedBranch) {
+      return alert('Please select a branch');
+    }
+    if (this.serviceMode === 'single' && !this.selectedProduct) {
+      return alert('Please select a service');
+    }
+    if (this.serviceMode === 'course' && this.courseItems.length === 0) {
+      return alert('Please select at least one service');
     }
 
     if (!this.selectedDay || !this.selectedTime) {
@@ -644,31 +830,34 @@ export class BookingComponent implements OnInit, OnDestroy {
 
     const formattedDate = this.formatDateForAPI(this.selectedDayDate, this.selectedTime);
 
-    // Calculate points to redeem (in 10k increments)
+    // Calculate points to redeem based on user input
     let pointsToRedeem = 0;
-    if (this.applyPointsDiscount && this.userPoints >= 10000) {
-      pointsToRedeem = Math.floor(this.userPoints / 10000) * 10000;
+    if (this.applyPointsDiscount && this.isPointsInputValid && this.pointsToRedeemInput >= 10000) {
+      pointsToRedeem = this.pointsToRedeemInput;
     }
 
     try {
       const bookingSummary = {
-        serviceName: this.selectedProduct.name,
+        serviceName: this.serviceMode === 'single' ? this.selectedProduct!.name : `Course (${this.courseItems.length} items)` ,
         branchName: this.selectedBranch.name,
         bookingDate: this.selectedDay,
         bookingTime: this.selectedTime,
-        originalPrice: this.selectedProduct.price,
+        originalPrice: this.serviceMode === 'single' ? this.selectedProduct!.price : this.courseTotal,
         finalTotal: this.finalTotal,
         pointsDiscountApplied: this.applyPointsDiscount,
         pointsToRedeem: pointsToRedeem,
-        pointsDiscountAmount: this.applyPointsDiscount ? this.actualDiscountApplied : 0,
-        voucherApplied: this.voucherApplied,
-        voucherDiscount: this.voucherDiscount,
+        pointsDiscountAmount: this.applyPointsDiscount && this.isPointsInputValid ? this.calculatedDiscount : 0,
+        voucherApplied: this.serviceMode === 'single' ? this.voucherApplied : false,
+        voucherDiscount: this.serviceMode === 'single' ? this.voucherDiscount : 0,
+        courseDiscountRate: this.serviceMode === 'course' ? this.courseDiscountRate : 0,
+        courseDiscountAmount: this.serviceMode === 'course' ? this.courseDiscountAmount : 0,
         paymentMethod: 'Online Payment',
         user: {
           name: this.userName,
           email: this.userEmail
         },
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        items: this.serviceMode === 'course' ? this.courseItems.map(ci => ({ id: ci.product._id, name: ci.product.name, qty: ci.quantity, price: ci.product.price })) : undefined
       };
       sessionStorage.setItem('latestBookingSummary', JSON.stringify(bookingSummary));
       
@@ -684,47 +873,94 @@ export class BookingComponent implements OnInit, OnDestroy {
     }
 
     const branchId = this.selectedBranch._id;
-    const productId = this.selectedProduct._id;
+    const productId = this.serviceMode === 'single' ? this.selectedProduct!._id : this.courseItems[0].product._id;
 
     console.log('📤 Sending payment request with:', {
       branchId,
       productId,
-      serviceName: this.selectedProduct.name,
+      serviceName: this.serviceMode === 'single' ? this.selectedProduct!.name : `Course (${this.courseItems.length} items)`,
       finalPrice: this.finalTotal,
       date: formattedDate,
       pointsToRedeem
     });
 
-    this.bookingService.createPaymentIntent(
-      branchId, 
-      productId, 
-      formattedDate, 
-      this.selectedTime,
-      this.selectedProduct.name,
-      this.finalTotal
-    ).subscribe({
+    const paymentRequest$ = this.serviceMode === 'course'
+      ? this.bookingService.createCoursePaymentIntent({
+        service: this.courseItems.map(item => ({
+          serviceName: item.product.name,
+          serviceId: item.product._id,
+          servicePrice: item.product.price,
+          noOfSessions: item.quantity
+        })),
+        branchId,
+        userName: this.userName || 'Guest',
+        phone: this.userPhone || ''
+      })
+      : this.bookingService.createPaymentIntent(
+        branchId,
+        productId,
+        formattedDate,
+        this.selectedTime,
+        this.userName || 'Guest',
+        this.finalTotal
+      );
+
+    paymentRequest$.subscribe({
       next: (res: any) => {
         console.log('✅ PAYMENT INTENT RESPONSE:', res);
         localStorage.setItem('lastPaymentIntentResponse', JSON.stringify(res));
         
-        const orderId = res._id || res.data?._id || res.orderId || res.data?.orderId;
+        // Log all possible orderId locations for debugging
+        console.log('🔍 Searching for orderId in response:', {
+          'res._id': res._id,
+          'res.data?._id': res.data?._id,
+          'res.orderId': res.orderId,
+          'res.data?.orderId': res.data?.orderId,
+          'res.paymobOrderId': res.paymobOrderId,
+          'res.data?.paymobOrderId': res.data?.paymobOrderId,
+          'res.id': res.id,
+          'res.data?.id': res.data?.id,
+          'res.data': res.data,
+          'res': res
+        });
+        
+        const orderId = this.extractOrderId(res);
         
         if (orderId) {
           sessionStorage.setItem('orderId', orderId);
           console.log('💾 Order ID saved:', orderId);
-          
-          // If points discount is applied, call redeem API AFTER order is created
-          if (this.applyPointsDiscount && pointsToRedeem > 0) {
-            this.redeemPointsForOrder(orderId, pointsToRedeem);
-          }
         } else {
-          console.warn('⚠️ No orderId found in response:', res);
+          console.warn('⚠️ No orderId found in response, but we have paymobUrl. Proceeding anyway.');
+          // Log the full response for debugging
+          sessionStorage.setItem('lastPaymentResponseWithoutOrderId', JSON.stringify(res));
         }
         
-        if (res.redirectLink) {
-          window.location.href = res.redirectLink;
+        // Always save the payment URL and key
+        const redirectLink = res?.redirectLink || res?.data?.redirectLink || res?.redirect_url || res?.data?.redirect_url || res?.paymobUrl || res?.data?.paymobUrl;
+        const paymentKey = res?.paymentKey || res?.data?.paymentKey;
+        const paymobIframeUrl = paymentKey
+          ? `https://accept.paymob.com/api/acceptance/iframes/1?payment_token=${paymentKey}`
+          : '';
+        
+        if (!redirectLink && !paymobIframeUrl) {
+          console.error('❌ No redirect URL found in response:', res);
+          alert('Payment initialization failed. Please try again.');
+          return;
+        }
+        
+        // If points discount is applied and we have an orderId, redeem points
+        if (this.applyPointsDiscount && pointsToRedeem > 0) {
+          if (orderId) {
+            console.log('🎯 Redeeming points before redirect:', { orderId, pointsToRedeem });
+            this.redeemPointsAndRedirect(orderId, pointsToRedeem, redirectLink, paymobIframeUrl);
+          } else {
+            console.warn('⚠️ Cannot redeem points without orderId. Proceeding to payment without points discount.');
+            this.applyPointsDiscount = false;
+            this.redirectToPayment(redirectLink, paymobIframeUrl);
+          }
         } else {
-          alert('No redirect link received.');
+          // No points redemption, redirect immediately
+          this.redirectToPayment(redirectLink, paymobIframeUrl);
         }
       },
       error: (err) => {
@@ -738,9 +974,134 @@ export class BookingComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ===== Call Redeem Points API =====
+  // ===== Helper: Extract Order ID from various response structures =====
+  private extractOrderId(res: any): string | null {
+    if (!res) return null;
+    
+    // Check all possible locations for orderId
+    const possiblePaths = [
+      res._id,
+      res.id,
+      res.orderId,
+      res.paymobOrderId,
+      res.order?._id,
+      res.order?.id,
+      res.data?._id,
+      res.data?.id,
+      res.data?.orderId,
+      res.data?.paymobOrderId,
+      res.data?.order?._id,
+      res.data?.order?.id
+    ];
+    
+    for (const path of possiblePaths) {
+      if (path && typeof path === 'string') {
+        return path;
+      }
+    }
+    
+    // If data is an object with _id directly
+    if (res.data && typeof res.data === 'object' && res.data._id) {
+      return res.data._id;
+    }
+    
+    // If the response itself is the order object
+    if (res._id && typeof res._id === 'string') {
+      return res._id;
+    }
+    
+    return null;
+  }
+
+  // ===== Redeem Points then Redirect =====
+  private redeemPointsAndRedirect(
+    orderId: string, 
+    pointsToRedeem: number, 
+    redirectLink: string, 
+    paymobIframeUrl: string
+  ): void {
+    this.isLoading = true;
+    
+    this.ordersService.redeemPoints(orderId, pointsToRedeem).subscribe({
+      next: (res: any) => {
+        console.log('✅ Points redeemed successfully:', res);
+        this.pointsRedeemed = res.data.pointsRedeemed;
+        this.actualDiscountApplied = res.data.discountApplied;
+        this.remainingPointsAfterRedemption = res.data.remainingPoints;
+        
+        // Update user points in localStorage
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            const user = JSON.parse(storedUser);
+            user.points = res.data.remainingPoints;
+            localStorage.setItem('user', JSON.stringify(user));
+            this.userPoints = res.data.remainingPoints;
+          } catch (e) {
+            console.error('Failed to update user points:', e);
+          }
+        }
+        
+        // Store redemption success for payment success page
+        sessionStorage.setItem('pointsRedemptionSuccess', JSON.stringify({
+          pointsRedeemed: res.data.pointsRedeemed,
+          discountApplied: res.data.discountApplied,
+          remainingPoints: res.data.remainingPoints,
+          newOrderTotal: res.data.newOrderTotal
+        }));
+        
+        this.isLoading = false;
+        
+        // Now redirect to Paymob with discounted total
+        this.redirectToPayment(redirectLink, paymobIframeUrl);
+      },
+      error: (err: any) => {
+        this.isLoading = false;
+        console.error('❌ Points redemption failed:', err);
+        
+        let errorMsg = "We could not apply your points discount";
+        if (err.status === 400) {
+          errorMsg = 'Not enough points available';
+        } else if (err.status === 401 || err.status === 403) {
+          errorMsg = 'Unable to verify your account';
+        } else if (err.status === 404) {
+          errorMsg = 'Order not found';
+        } else if (err.error?.message) {
+          errorMsg = err.error.message;
+        }
+        
+        // DON'T block payment - just log the error and continue
+        // User can still pay full amount even if redemption fails
+        console.warn('⚠️ Continuing to payment without points discount');
+        sessionStorage.setItem('pointsRedemptionError', errorMsg);
+        
+        // Show a friendly toast/notification (optional - just log for now)
+        // this.showNotification('Points discount not applied. Proceeding with full payment.');
+        
+        // Reset points discount state but continue to payment
+        this.applyPointsDiscount = false;
+        this.resetPointsRedemption();
+        
+        // Proceed to Paymob anyway - payment is more important than the discount
+        this.redirectToPayment(redirectLink, paymobIframeUrl);
+      }
+    });
+  }
+
+  // ===== Redirect to Payment =====
+  private redirectToPayment(redirectLink: string, paymobIframeUrl: string): void {
+    if (redirectLink) {
+      window.location.href = redirectLink;
+    } else if (paymobIframeUrl) {
+      window.location.href = paymobIframeUrl;
+    } else {
+      alert('No redirect link received.');
+    }
+  }
+
+  // ===== Call Redeem Points API (Legacy - kept for compatibility) =====
   private redeemPointsForOrder(orderId: string, pointsToRedeem: number): void {
-    console.log('🎯 Redeeming points:', { orderId, pointsToRedeem });
+    console.log('🎯 Redeeming points (legacy):', { orderId, pointsToRedeem });
     
     this.ordersService.redeemPoints(orderId, pointsToRedeem).subscribe({
       next: (res: any) => {

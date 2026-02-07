@@ -1,0 +1,104 @@
+<section class="testimonials-section" id="testimonials">
+  <div class="testimonials-container">
+    <!-- Section Header -->
+    <div class="testimonials-header">
+      <h2 class="testimonials-title">{{ title }}</h2>
+      <p class="testimonials-subtitle">{{ subtitle }}</p>
+    </div>
+
+    <!-- Loading State -->
+    <div class="testimonials-loading" *ngIf="loading">
+      <div class="loading-spinner"></div>
+      <p>Loading testimonials...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="testimonials-error" *ngIf="error && !loading">
+      <i class="fas fa-exclamation-circle"></i>
+      <p>{{ error }}</p>
+      <button class="retry-btn" (click)="refreshFeedbacks()">Try Again</button>
+    </div>
+
+    <!-- Testimonials Carousel -->
+    <div class="testimonials-carousel" *ngIf="!loading && !error && displayFeedbacks.length > 0">
+      <!-- Navigation Arrows -->
+      <button 
+        class="carousel-arrow carousel-arrow-prev" 
+        (click)="previousSlide()" 
+        [disabled]="!canGoPrevious"
+        [attr.aria-label]="'Previous testimonials'">
+        <i class="fas fa-chevron-left"></i>
+      </button>
+
+      <!-- Cards Container -->
+      <div class="testimonials-cards-wrapper">
+        <div class="testimonials-cards" [style.transform]="'translateX(-' + (currentIndex * (100 / visibleFeedbacks.length)) + '%)'">
+          <div 
+            class="testimonial-card" 
+            *ngFor="let feedback of displayFeedbacks; let i = index"
+            [class.active]="i >= currentIndex && i < currentIndex + (isMobile() ? 1 : 3)">
+            
+            <!-- Quote Icon -->
+            <div class="quote-icon">
+              <i class="fas fa-quote-left"></i>
+            </div>
+
+            <!-- Rating -->
+            <div class="testimonial-rating">
+              <span class="star" *ngFor="let star of getStarArray(feedback.rating)">
+                <i class="fas fa-star"></i>
+              </span>
+              <span class="star empty" *ngFor="let star of getEmptyStarArray(feedback.rating)">
+                <i class="far fa-star"></i>
+              </span>
+            </div>
+
+            <!-- Comment -->
+            <p class="testimonial-comment">{{ feedback.comment }}</p>
+
+            <!-- Customer Info -->
+            <div class="testimonial-customer">
+              <div class="customer-avatar" *ngIf="!feedback.avatar">
+                <span class="avatar-initials">{{ getInitials(feedback.customerName) }}</span>
+              </div>
+              <div class="customer-avatar" *ngIf="feedback.avatar">
+                <img [src]="feedback.avatar" [alt]="feedback.customerName">
+              </div>
+              <div class="customer-info">
+                <h4 class="customer-name">{{ feedback.customerName }}</h4>
+                <span class="service-name" *ngIf="feedback.serviceName">{{ feedback.serviceName }}</span>
+                <span class="testimonial-date">{{ formatDate(feedback.date) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Arrows -->
+      <button 
+        class="carousel-arrow carousel-arrow-next" 
+        (click)="nextSlide()" 
+        [disabled]="!canGoNext"
+        [attr.aria-label]="'Next testimonials'">
+        <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+
+    <!-- Pagination Dots -->
+    <div class="testimonials-pagination" *ngIf="!loading && !error && totalSlides > 1">
+      <button 
+        class="pagination-dot" 
+        *ngFor="let slide of [].constructor(totalSlides); let i = index"
+        [class.active]="getCurrentSlide() === i"
+        (click)="goToSlide(i)"
+        [attr.aria-label]="'Go to slide ' + (i + 1)">
+      </button>
+    </div>
+
+    <!-- Empty State -->
+    <div class="testimonials-empty" *ngIf="!loading && !error && displayFeedbacks.length === 0">
+      <i class="fas fa-comments"></i>
+      <p>No testimonials yet. Be the first to share your experience!</p>
+    </div>
+  </div>
+</section>
